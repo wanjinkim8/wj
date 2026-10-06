@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<title>W.J · Wine Journey</title>
+<meta name="description" content="코르크를 여는 순간, 오감을 깨우는 즐거움과 마주해 보세요. 가격대마다 이유를 두고 고른 와인 98병과 열두 나라 산지 지도, 맛과 이야기를 담았습니다.">
+<meta property="og:title" content="W.J · Wine Journey">
+<meta property="og:description" content="Uncork a bottle, let joy awaken all your senses. 코르크를 여는 순간, 오감을 깨우는 즐거움과 마주해 보세요.">
+<meta property="og:image" content="https://wanjinkim8.github.io/wine-atlas/img/og.jpg">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0b0a09">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b0a09'/%3E%3Ctext x='29' y='44' text-anchor='middle' font-family='Georgia,serif' font-style='italic' font-size='38' fill='%23e3cfa6'%3Ew%3C/text%3E%3Crect x='46' y='37' width='7' height='7' transform='rotate(45 49.5 40.5)' fill='%23cdb084'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Noto+Serif+KR:wght@300;400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@1,6..96,400..600&display=swap&text=wjWJ">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="preload" as="image" href="media/hero_mobile-s.webp" media="(max-aspect-ratio: 1/1)">
+<link rel="preload" as="image" href="media/hero_desktop.webp" media="(min-aspect-ratio: 1/1)">
+<link rel="stylesheet" href="app.css?v=30">
+<link rel="stylesheet" href="lux.css?v=30">
+<link rel="stylesheet" href="map.css?v=30">
+</head>
+<body>
+<a class="skip" href="#main">본문으로 건너뛰기</a>
+<div class="grain" aria-hidden="true"></div>
+
+<!-- age gate: hidden until JS decides it is needed, so the page still works without scripts -->
+<div class="gate" id="gate" role="dialog" aria-modal="true" aria-labelledby="gate-q" hidden>
+  <picture class="gate-media">
+    <source media="(min-width: 900px)" srcset="img/brand/2_wax-l.webp">
+    <img src="img/brand/2_wax-s.webp" alt="" decoding="async">
+  </picture>
+  <div class="gate-card">
+    <p class="gate-slogan" lang="en">Uncork a bottle, let joy awaken all your senses.</p>
+    <h2 class="gate-q" id="gate-q">만 19세 이상이신가요?</h2>
+    <p class="gate-note">W.J 는 와인을 소개하는 곳이라 만 19세 이상만 들어오실 수 있습니다.</p>
+    <div class="gate-actions">
+      <button class="cta" type="button" data-gate="yes"><span>네, 19세 이상입니다</span><i class="cta-ic" aria-hidden="true"></i></button>
+      <button class="cta cta-quiet" type="button" data-gate="no"><span>아니요</span></button>
+    </div>
+    <p class="gate-bye" hidden>성인이 되면 다시 만나요. 오늘은 여기까지입니다.</p>
+  </div>
+</div>
+
+<div class="curtain" aria-hidden="true"><span class="logo logo-lg">w<i></i>j</span></div>
+
+<header class="topbar" id="topbar">
+  <a class="brand" href="#/" aria-label="W.J 처음으로">
+    <span class="logo">w<i></i>j</span>
+    <span class="brand-sub" lang="en">Wine Journey</span>
+  </a>
+  <nav class="topnav" aria-label="주요 메뉴">
+    <a href="#/list" data-tab="list"><span>와인 고르기</span></a>
+    <a href="#/map" data-tab="map"><span>산지 지도</span></a>
+    <a href="#/study" data-tab="study"><span>와인 공부</span></a>
+  </nav>
+  <button class="icon-btn search-open" type="button" aria-label="와인 검색" data-action="search">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
+  </button>
+  <button class="menu-btn" type="button" aria-label="메뉴 열기" aria-expanded="false" aria-controls="menu" data-action="menu"><span></span><span></span></button>
+</header>
+
+<div class="menu" id="menu" hidden>
+  <nav aria-label="전체 메뉴">
+    <a href="#/list" data-tab="list"><small>01</small><span>와인 고르기</span></a>
+    <a href="#/map" data-tab="map"><small>02</small><span>산지 지도</span></a>
+    <a href="#/study" data-tab="study"><small>03</small><span>와인 공부</span></a>
+    <button type="button" data-action="picker"><small>04</small><span>취향으로 세 병</span></button>
+  </nav>
+  <p class="menu-slogan" lang="en">Uncork a bottle, let joy awaken all your senses.</p>
+</div>
+
+<main id="main">
+  <section class="view" id="view-list" data-view="list" hidden>
+    <section class="hero" id="hero" aria-labelledby="hero-title">
+      <div class="hero-media">
+        <picture>
+          <source media="(min-aspect-ratio: 1/1)" srcset="media/hero_desktop.webp">
+          <img class="hero-poster" src="media/hero_mobile-s.webp" alt="어두운 탁자 위 크리스털 잔 속에서 레드 와인이 천천히 도는 모습" fetchpriority="high">
+        </picture>
+        <video class="hero-video" muted loop playsinline preload="none" aria-hidden="true" tabindex="-1"></video>
+      </div>
+      <div class="hero-veil"></div>
+      <div class="hero-copy">
+        <p class="eyebrow" lang="en">W.J · Wine Journey</p>
+        <h1 class="hero-title" id="hero-title" lang="en"><span class="ln"><span>Uncork a bottle,</span></span><span class="ln"><span><em>let joy awaken</em></span></span><span class="ln"><span>all your senses.</span></span></h1>
+        <p class="hero-ko">코르크를 여는 순간, 오감을 깨우는 즐거움과 마주해 보세요.</p>
+        <div class="hero-cta">
+          <a class="cta" href="#/list" data-scroll="journeys"><span>가격대로 고르기</span><i class="cta-ic" aria-hidden="true"></i></a>
+          <a class="cta cta-quiet" href="#/map"><span>산지 지도로 떠나기</span></a>
+        </div>
+      </div>
+      <div class="hero-foot" aria-hidden="true">
+        <span><b data-count="wines">98</b> Bottles</span>
+        <span><b data-count="countries">12</b> Countries</span>
+        <span><b>5</b> Journeys</span>
+        <span class="scroll-cue"><i></i>Scroll</span>
+      </div>
+    </section>
+
+    <section class="manifesto" id="manifesto" aria-labelledby="mf-title">
+      <div class="mf-media">
+        <figure class="mf-main"><img src="img/brand/1_foil-s.webp" srcset="img/brand/1_foil-s.webp 900w, img/brand/1_foil-l.webp 2000w" sizes="(min-width: 900px) 46vw, 92vw" alt="버건디 종이 라벨에 금박으로 찍은 w.j 로고" loading="lazy" decoding="async"></figure>
+        <figure class="mf-inset"><img src="img/brand/6_leather-s.webp" alt="가죽 시음 노트 표지에 찍은 wj 모노그램" loading="lazy" decoding="async"></figure>
+      </div>
+      <div class="mf-copy">
+        <p class="eyebrow" lang="en">Our Journey</p>
+        <h2 class="mf-lead" id="mf-title" data-words>잔 속에서 피어나는 다채로운 향기, 입안을 감도는 깊은 풍미, 그리고 유리잔 끝에서 맴도는 맑은 여운까지.</h2>
+        <p class="mf-body">W.J(Wine Journey)는 한 잔의 와인이 선사하는 완벽하고 진한 매력을 오감으로 탐구하고 공유하는 커뮤니티입니다.</p>
+        <p class="mf-ask">당신의 일상을 깨울 새로운 와인의 여정,<br>지금 여기서 함께 시작해 볼까요?</p>
+      </div>
+    </section>
+
+    <section class="journeys" id="journeys" aria-labelledby="jr-title">
+      <header class="sec-head">
+        <p class="eyebrow" lang="en">Five Journeys</p>
+        <h2 id="jr-title">가격대마다,<br>고른 이유가 있습니다</h2>
+        <p>6만 원대는 가성비로, 30만 원 이상은 맛과 이야기로 골랐습니다. 마음이 가는 여정을 골라 보세요.</p>
+      </header>
+      <ol class="jlist" id="jlist"></ol>
+      <div class="jpeek" id="jpeek" aria-hidden="true"><div class="jpeek-in"></div></div>
+    </section>
+
+    <div class="tier-rail" id="tier-rail" role="toolbar" aria-label="가격대">
+      <div class="rail-track" id="rail-track"></div>
+      <button class="filter-btn" type="button" data-action="filter" aria-label="필터 열기">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M7 12h10M10 17h4"/></svg><span>필터</span><b class="filter-count" hidden></b>
+      </button>
+    </div>
+    <div class="active-filters" id="active-filters" hidden></div>
+    <div id="tiers"></div>
+    <div class="empty" id="empty" hidden>
+      <p>고른 조건에 맞는 와인이 없습니다.</p>
+      <button class="cta cta-quiet" type="button" data-action="clear-filters"><span>조건 모두 지우기</span></button>
+    </div>
+
+    <section class="explore" aria-labelledby="ex-title">
+      <header class="sec-head">
+        <p class="eyebrow" lang="en">Continue the Journey</p>
+        <h2 id="ex-title">여정을 이어 가는<br>세 가지 방법</h2>
+      </header>
+      <div class="bento">
+        <a class="tile tile-a" href="#/map">
+          <img src="img/brand/5_barrel-s.webp" srcset="img/brand/5_barrel-s.webp 900w, img/brand/5_barrel-l.webp 2000w" sizes="(min-width: 900px) 60vw, 92vw" alt="" loading="lazy" decoding="async">
+          <span class="tile-copy"><span class="eyebrow" lang="en">Atlas</span><strong>열두 나라 산지 지도</strong><span>나라를 누르면 산지와 그곳의 와인이 펼쳐집니다.</span></span><i class="cta-ic" aria-hidden="true"></i>
+        </a>
+        <a class="tile tile-b" href="#/study">
+          <img src="img/brand/4_decanter-s.webp" alt="" loading="lazy" decoding="async">
+          <span class="tile-copy"><span class="eyebrow" lang="en">Study</span><strong>와인 공부</strong><span>향, 품종, 라벨 읽는 법을 쉽게와 깊게 두 겹으로 정리했습니다.</span></span><i class="cta-ic" aria-hidden="true"></i>
+        </a>
+        <button class="tile tile-c" type="button" data-action="picker">
+          <img src="img/brand/3_emboss-s.webp" alt="" loading="lazy" decoding="async">
+          <span class="tile-copy"><span class="eyebrow" lang="en">First Bottle</span><strong>처음이라면, 취향으로 세 병</strong><span>두 가지만 고르시면 첫 병을 골라 드립니다.</span></span><i class="cta-ic" aria-hidden="true"></i>
+        </button>
+      </div>
+    </section>
+  </section>
+
+  <section class="view" id="view-map" data-view="map" hidden>
+    <div class="map-host" id="map-host"></div>
+  </section>
+
+  <section class="view" id="view-study" data-view="study" hidden>
+    <header class="study-head">
+      <picture class="study-media"><source media="(min-width: 900px)" srcset="img/brand/4_decanter-l.webp"><img src="img/brand/4_decanter-s.webp" alt="" decoding="async"></picture>
+      <div class="study-copy">
+        <p class="eyebrow" lang="en">Study</p>
+        <h1>처음 마시는 분도,<br>오래 마신 분도</h1>
+        <p>향 사전 · 품종 사전 · 나라별 등급 · 마시는 법 · 퀴즈를 쉬운 설명과 깊은 설명 두 겹으로 정리했습니다.</p>
+        <div class="depth-toggle" role="radiogroup" aria-label="설명 깊이">
+          <button type="button" role="radio" aria-checked="true" data-depth="easy">쉽게</button>
+          <button type="button" role="radio" aria-checked="false" data-depth="expert">깊게</button>
+        </div>
+      </div>
+    </header>
+    <nav class="study-tabs" id="study-tabs" aria-label="공부 주제"></nav>
+    <div class="study-body" id="study-body"></div>
+  </section>
+</main>
+
+<footer class="site-foot" id="site-foot">
+  <div class="foot-media" aria-hidden="true"><img src="img/brand/3_emboss-s.webp" alt="" loading="lazy" decoding="async"></div>
+  <div class="foot-inner">
+    <div class="foot-brand">
+      <span class="logo logo-xl" aria-label="W.J">w<i></i>j</span>
+      <p class="foot-slogan" lang="en">Uncork a bottle,<br>let joy awaken all your senses.</p>
+      <p class="foot-ko">코르크를 여는 순간, 오감을 깨우는 즐거움과 마주해 보세요.</p>
+    </div>
+    <nav class="foot-nav" aria-label="바닥 메뉴">
+      <a href="#/list">와인 고르기</a><a href="#/map">산지 지도</a><a href="#/study">와인 공부</a><button type="button" data-action="picker">취향으로 세 병</button>
+    </nav>
+    <div class="foot-notes">
+      <p>평점은 Vivino 의 빈티지 전체 평균, 국내가는 데일리샷 · 와인앤모어 · 비노봇 · 코스트코 등 표시된 출처 기준이며 2026년 10월 6일에 확인했습니다. 매장마다 가격이 다를 수 있습니다.</p>
+      <p>병 사진은 각 와이너리와 판매처의 제품 사진입니다. 분위기 사진과 영상, 산지 그림은 AI 로 만든 이미지입니다. 지도는 OpenFreeMap · OpenStreetMap 자료입니다.</p>
+      <p>만 19세 미만은 술을 마실 수 없습니다. 지나친 음주는 건강을 해칠 수 있습니다.</p>
+    </div>
+    <p class="foot-copy" lang="en">© 2026 W.J Wine Journey</p>
+  </div>
+</footer>
+
+<dialog class="sheet" id="sheet" aria-labelledby="sheet-title">
+  <div class="sheet-inner">
+    <div class="sheet-grip" aria-hidden="true"><span></span></div>
+    <button class="icon-btn sheet-close" type="button" data-action="close-sheet" aria-label="닫기"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    <div class="sheet-body" id="sheet-body" data-lenis-prevent></div>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<noscript><p class="noscript">이 페이지는 자바스크립트가 켜져 있어야 와인 목록과 지도가 보입니다.</p></noscript>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.3.4/dist/lenis.min.js" defer></script>
+<script src="map.js?v=30" defer></script>
+<script src="app.js?v=30" defer></script>
+</body>
+</html>
