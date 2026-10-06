@@ -73,7 +73,8 @@
   };
   // until every wine has a recorded route, read the old 맛 / 스토리 marks
   function routesOf(w) {
-    if (w.routes && w.routes.length) return w.routes;
+    if (w.route_pending) return [];
+    if (Array.isArray(w.routes) && w.routes.length) return w.routes;
     const p = priceOf(w);
     return (w.axis || []).map((a) => (a === '스토리' ? '스토리' : p && p < 100000 ? '가성비' : '기준')).filter((v, i, a) => a.indexOf(v) === i);
   }
@@ -555,7 +556,7 @@
           <div class="wd-kind"><i class="dot" data-type="${esc(w.type)}"></i>${esc(w.type)}<span>·</span>${esc(w.grape)}<span>·</span>${esc(w.country)}${w.region_ko || w.region ? ` ${esc(w.region_ko || w.region)}` : ''}</div>
           <h2 class="wd-name" id="sheet-title">${esc(w.name)}</h2>
           ${w.en ? `<p class="wd-en" lang="en">${esc(w.en)}</p>` : ''}
-          ${routesOf(w).length ? `<div class="route-box">${routesOf(w).map((r, i) => `<div class="route-row${i ? '' : ' main'}"><span class="axis-badge">W.J 가 고른 이유 · ${esc((ROUTE[r] || {}).label || r)}</span><p>${esc(i === 0 && w.route_note ? w.route_note : (ROUTE[r] || {}).line || '')}</p></div>`).join('')}<button class="route-more" type="button" data-action="criteria">선정 기준 자세히 보기</button></div>` : ''}
+          ${routesOf(w).length ? `<div class="route-box">${routesOf(w).map((r, i) => `<div class="route-row${i ? '' : ' main'}"><span class="axis-badge">W.J 가 고른 이유 · ${esc((ROUTE[r] || {}).label || r)}</span><p>${esc((ROUTE[r] || {}).line || '')}</p></div>`).join('')}<button class="route-more" type="button" data-action="criteria">선정 기준 자세히 보기</button></div>` : ''}
           ${w.hook ? `<p class="wd-hook">${esc(w.hook)}</p>` : w.note ? `<p class="wd-hook">${esc(w.note)}</p>` : ''}
         </header>
         <dl class="facts">
