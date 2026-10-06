@@ -198,7 +198,7 @@
     setupPeek();
   }
   // the tier picture rises softly behind the list; variant chosen with ?peek=a|b|c|d
-  const PEEK = (new URLSearchParams(location.search).get('peek') || 'c').toLowerCase(); // owner chose C (2026-10-06)
+  const PEEK = 'c'; // owner chose C (2026-10-06); old ?peek= links also show C
   document.documentElement.dataset.peek = PEEK;
   let peekBound = false;
   function setupPeek() {
