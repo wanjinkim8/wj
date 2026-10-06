@@ -16,13 +16,13 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Noto+Serif+KR:wght@300;400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@1,6..96,400..600&display=swap&text=wjWJ">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-<link rel="preload" as="image" href="media/hero_mobile-s.webp" media="(max-aspect-ratio: 1/1)">
-<link rel="preload" as="image" href="media/hero_desktop.webp" media="(min-aspect-ratio: 1/1)">
+<link rel="preload" as="image" href="media/hero_grape-m.webp" media="(max-aspect-ratio: 1/1)">
+<link rel="preload" as="image" href="media/hero_grape.webp" media="(min-aspect-ratio: 1/1)">
 <link rel="stylesheet" href="app.css?v=30">
-<link rel="stylesheet" href="lux.css?v=30">
+<link rel="stylesheet" href="lux.css?v=34">
 <link rel="stylesheet" href="map.css?v=30">
 </head>
 <body>
@@ -33,7 +33,7 @@
 <div class="gate" id="gate" role="dialog" aria-modal="true" aria-labelledby="gate-q" hidden>
   <picture class="gate-media">
     <source media="(min-width: 900px)" srcset="img/brand/2_wax-l.webp">
-    <img src="img/brand/2_wax-s.webp" alt="" decoding="async">
+    <img src="img/brand/2_wax-s.webp" alt="" loading="lazy" decoding="async">
   </picture>
   <div class="gate-card">
     <p class="gate-slogan" lang="en">Uncork a bottle, let joy awaken all your senses.</p>
@@ -80,8 +80,8 @@
     <section class="hero" id="hero" aria-labelledby="hero-title">
       <div class="hero-media">
         <picture>
-          <source media="(min-aspect-ratio: 1/1)" srcset="media/hero_desktop.webp">
-          <img class="hero-poster" src="media/hero_mobile-s.webp" alt="어두운 탁자 위 크리스털 잔 속에서 레드 와인이 천천히 도는 모습" fetchpriority="high">
+          <source media="(min-aspect-ratio: 1/1)" srcset="media/hero_grape.webp">
+          <img class="hero-poster" src="media/hero_grape-m.webp" alt="해 질 녘 역광을 받은 잎 사이로 늘어진 잘 익은 포도송이" fetchpriority="high">
         </picture>
         <video class="hero-video" muted loop playsinline preload="none" aria-hidden="true" tabindex="-1"></video>
       </div>
@@ -90,10 +90,6 @@
         <p class="eyebrow" lang="en">W.J · Wine Journey</p>
         <h1 class="hero-title" id="hero-title" lang="en"><span class="ln"><span>Uncork a bottle,</span></span><span class="ln"><span><em>let joy awaken</em></span></span><span class="ln"><span>all your senses.</span></span></h1>
         <p class="hero-ko">코르크를 여는 순간, 오감을 깨우는 즐거움과 마주해 보세요.</p>
-        <div class="hero-cta">
-          <a class="cta" href="#/list" data-scroll="journeys"><span>가격대로 고르기</span><i class="cta-ic" aria-hidden="true"></i></a>
-          <a class="cta cta-quiet" href="#/map"><span>산지 지도로 떠나기</span></a>
-        </div>
       </div>
       <div class="hero-foot" aria-hidden="true">
         <span><b data-count="wines">98</b> Bottles</span>
@@ -104,13 +100,10 @@
     </section>
 
     <section class="manifesto" id="manifesto" aria-labelledby="mf-title">
-      <div class="mf-media">
-        <figure class="mf-main"><img src="img/brand/1_foil-s.webp" srcset="img/brand/1_foil-s.webp 900w, img/brand/1_foil-l.webp 2000w" sizes="(min-width: 900px) 46vw, 92vw" alt="버건디 종이 라벨에 금박으로 찍은 w.j 로고" loading="lazy" decoding="async"></figure>
-        <figure class="mf-inset"><img src="img/brand/6_leather-s.webp" alt="가죽 시음 노트 표지에 찍은 wj 모노그램" loading="lazy" decoding="async"></figure>
-      </div>
+      <figure class="mf-media"><img src="img/brand/1_foil-s.webp" srcset="img/brand/1_foil-s.webp 900w, img/brand/1_foil-l.webp 2000w" sizes="(min-width: 900px) 50vw, 100vw" alt="버건디 종이 라벨에 금박으로 찍은 w.j 로고" loading="lazy" decoding="async"></figure>
       <div class="mf-copy">
         <p class="eyebrow" lang="en">Our Journey</p>
-        <h2 class="mf-lead" id="mf-title" data-words>잔 속에서 피어나는 다채로운 향기, 입안을 감도는 깊은 풍미, 그리고 유리잔 끝에서 맴도는 맑은 여운까지.</h2>
+        <h2 class="mf-lead" id="mf-title">잔 속에서 피어나는 다채로운 향기, 입안을 감도는 깊은 풍미, 그리고 유리잔 끝에서 맴도는 맑은 여운까지.</h2>
         <p class="mf-body">W.J(Wine Journey)는 한 잔의 와인이 선사하는 완벽하고 진한 매력을 오감으로 탐구하고 공유하는 커뮤니티입니다.</p>
         <p class="mf-ask">당신의 일상을 깨울 새로운 와인의 여정,<br>지금 여기서 함께 시작해 볼까요?</p>
       </div>
@@ -220,6 +213,6 @@
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.3.4/dist/lenis.min.js" defer></script>
 <script src="map.js?v=30" defer></script>
-<script src="app.js?v=30" defer></script>
+<script src="app.js?v=35" defer></script>
 </body>
 </html>

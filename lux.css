@@ -399,3 +399,146 @@ body[data-view="map"] .site-foot { display: none; }
   .mf-main img, .mf-inset img { transform: none; }
   .js-ready .card.pre { opacity: 1; transform: none; }
 }
+
+/* =====================================================================
+   Type and alignment v2 (2026-10-06 owner review)
+   Korean is gothic only (Pretendard). The serif stays for English brand lines and numerals.
+   Every block starts on one left edge: the same line as the logo.
+   ===================================================================== */
+:root {
+  --serif-ko: var(--font);
+  --edge: max(var(--gutter), calc((100% - var(--wide)) / 2 + var(--gutter)));
+  --fs-hero: clamp(46px, 6.8vw, 116px);
+  --fs-h1: clamp(32px, 4.4vw, 68px);
+  --fs-h2: clamp(28px, 3.3vw, 50px);
+  --fs-h3: clamp(20px, 2vw, 28px);
+  --fs-lead: clamp(22px, 2.2vw, 34px);
+  --ls-head: -0.035em;
+}
+
+/* one left edge */
+.topbar { padding-left: var(--edge); padding-right: var(--edge); }
+.hero-copy, .hero-foot { padding-left: var(--edge) !important; padding-right: var(--edge) !important; }
+.tier-rail { padding-left: var(--edge); padding-right: var(--edge); }
+.rail-track .chip:first-child { padding-left: 0; }
+.rail-track .chip:first-child::after { left: 0; }
+
+/* shared */
+.eyebrow { font-size: 11.5px; letter-spacing: 0.26em; gap: 12px; }
+.eyebrow::before { width: 24px; }
+.topnav a { font-size: 14px; letter-spacing: 0; }
+.brand-sub { letter-spacing: 0.3em; }
+
+/* hero: flush left, no indent, a little smaller */
+.hero-title { font-size: var(--fs-hero); line-height: 0.98; margin-top: 22px; }
+.hero-title .ln:nth-child(2) { padding-left: 0 !important; }
+.hero-ko { font-family: var(--font); font-weight: 400; font-size: clamp(16px, 1.3vw, 19px); letter-spacing: -0.02em; margin-top: 26px; }
+.hero-cta { margin-top: 36px; }
+
+/* section heads stack on the left */
+.sec-head { display: block; }
+.sec-head h2 { font-weight: 300; font-size: var(--fs-h2); line-height: 1.28; letter-spacing: var(--ls-head); margin-top: 20px; }
+.sec-head p { margin: 20px 0 0; max-width: 34em; font-size: 16px; justify-self: auto; }
+
+/* manifesto */
+.mf-lead { font-weight: 300; font-size: var(--fs-lead); line-height: 1.6; letter-spacing: -0.03em; }
+.mf-body { font-size: 16px; line-height: 1.9; }
+.mf-ask { font-family: var(--font); font-weight: 400; font-size: clamp(17px, 1.4vw, 20px); letter-spacing: -0.02em; }
+
+/* journeys */
+.jtitle { font-weight: 300; font-size: var(--fs-h3); letter-spacing: -0.03em; }
+.jmeta { font-size: 13px; letter-spacing: 0; }
+.jno { font-size: 22px; }
+@media (hover: hover) and (pointer: fine) { .jrow a:hover .jtitle { transform: translateX(10px); } }
+
+/* chapters: copy on the left edge, the outline numeral sits on the right */
+.chapter-copy { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; }
+.chapter-no { order: 4; justify-self: end; margin-top: -0.2em; font-size: clamp(110px, 16vw, 260px); }
+.chapter-meta { margin: 0; font-size: 12px; letter-spacing: 0.12em; }
+.chapter-title { font-weight: 300; font-size: var(--fs-h1); line-height: 1.2; letter-spacing: -0.04em; margin-top: 16px; max-width: 13em; }
+.chapter-body { font-size: 16px; line-height: 1.85; margin-top: 18px; }
+@media (min-width: 900px) {
+  .chapter-copy { grid-template-columns: minmax(0, 1fr) auto; column-gap: 4vw; }
+  .chapter-meta, .chapter-title, .chapter-body { grid-column: 1; }
+  .chapter-no { grid-column: 2; grid-row: 1 / span 3; align-self: end; order: 0; margin: 0 0 -0.08em; }
+  .chapter-body { font-size: 17px; }
+}
+@media (max-width: 899px) { .chapter-no { position: absolute; right: var(--gutter); top: calc(var(--top-h) + 64px); margin: 0; font-size: 120px; } }
+
+/* shelf: product text reads from the left under a centred bottle */
+.shelf-head { font-size: 13px; letter-spacing: 0; }
+.card-info { justify-items: start; text-align: left; padding: 20px 0 0; gap: 5px; }
+.card-kind { justify-content: flex-start; font-size: 12px; letter-spacing: 0.02em; }
+.card-name { font-weight: 500; font-size: 16px; line-height: 1.45; letter-spacing: -0.02em; }
+@media (min-width: 760px) { .card-name { font-size: 17px; } }
+.card-hook { font-size: 13.5px; line-height: 1.6; max-width: none; }
+.card-foot { justify-content: flex-start; font-size: 14px; }
+
+/* explore, footer, menu */
+.tile-copy strong { font-weight: 300; font-size: var(--fs-h3); letter-spacing: -0.03em; }
+.foot-nav a, .foot-nav button { font-weight: 300; font-size: 19px; letter-spacing: -0.02em; }
+.menu nav a, .menu nav button { font-weight: 300; letter-spacing: -0.035em; }
+
+/* study: left aligned, the decanter sits on the right */
+.study-copy { justify-items: start !important; text-align: left !important; }
+.study-copy p { margin-left: 0 !important; }
+.study-head h1 { font-weight: 300; font-size: var(--fs-h1); line-height: 1.2; letter-spacing: -0.04em; }
+@media (min-width: 900px) {
+  .study-media img { width: 70%; margin-left: 30%; -webkit-mask-image: linear-gradient(270deg, #000 50%, transparent); mask-image: linear-gradient(270deg, #000 50%, transparent); }
+  .study-head::after { background: linear-gradient(90deg, rgba(11, 10, 9, 0.92), rgba(11, 10, 9, 0.6) 45%, rgba(11, 10, 9, 0.15)), linear-gradient(180deg, rgba(11, 10, 9, 0.5) 0%, transparent 25%, transparent 60%, var(--bg) 100%); }
+}
+.s-sec h2 { font-weight: 300; font-size: var(--fs-h2); letter-spacing: var(--ls-head); }
+
+/* detail */
+.wd-name { font-weight: 300; font-size: clamp(28px, 2.9vw, 44px); line-height: 1.25; letter-spacing: -0.035em; }
+.wd-hook { font-family: var(--font); font-weight: 400; font-size: clamp(17px, 1.3vw, 19px); line-height: 1.75; letter-spacing: -0.02em; }
+.fact dd { font-family: var(--font); font-weight: 300; font-size: clamp(24px, 2vw, 30px); letter-spacing: -0.02em; }
+.why p { font-family: var(--font); font-weight: 400; font-size: 16.5px; line-height: 1.9; letter-spacing: -0.01em; }
+.more summary { font-family: var(--font); font-weight: 500; font-size: 16px; letter-spacing: -0.01em; }
+.ps h2 { font-weight: 300; font-size: clamp(28px, 2.8vw, 42px); letter-spacing: -0.035em; }
+.mini-wine strong { font-family: var(--font); font-weight: 500; font-size: 14.5px; letter-spacing: -0.02em; }
+.gate-q { font-family: var(--font); font-weight: 300; letter-spacing: -0.035em; }
+
+/* keyboard focus reads as clearly as hover */
+.jrow a:focus-visible, .tile:focus-visible, .card-open:focus-visible, .cta:focus-visible, .foot-nav a:focus-visible, .topnav a:focus-visible { outline: 1px solid var(--accent); outline-offset: 6px; border-radius: 0; }
+.jrow a:focus-visible::before { transform: scaleX(1); }
+.tile:focus-visible img { transform: scale(1.06); filter: brightness(0.82); }
+.card-open:focus-visible ~ * { color: var(--accent-2); }
+
+/* manifesto v2: one label photo, half and half, full height */
+.manifesto { max-width: none; margin: 0; padding: 0; gap: 0; min-height: 100svh; display: grid; grid-template-columns: minmax(0, 1fr); align-items: stretch; }
+.mf-media { position: relative; margin: 0; height: 64svh; overflow: hidden; background: var(--card); }
+.mf-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 42% 50%; transform: none; }
+.mf-copy { align-self: center; padding: 64px var(--gutter) 104px; max-width: 760px; }
+.mf-lead { margin-top: 26px; }
+.mf-lead .sl { padding-bottom: 0.06em; }
+@media (min-width: 900px) {
+  .manifesto { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .mf-media { height: auto; min-height: 100svh; }
+  .mf-copy { padding: calc(var(--top-h) + 40px) max(var(--gutter), calc((100vw - var(--wide)) / 2 + var(--gutter))) 80px clamp(48px, 6vw, 112px); max-width: none; }
+  .mf-copy > * { max-width: 30em; }
+  .mf-lead { max-width: 15em; }
+}
+
+/* hero: descenders of j and y are no longer clipped by the line masks */
+.hero-title .ln { padding-bottom: 0.24em; margin-bottom: -0.24em; }
+.hero-copy { padding-bottom: clamp(120px, 18vh, 210px); }
+
+/* phones and tablets without smooth scroll: native snapping on the big scenes */
+@media (pointer: coarse), (prefers-reduced-motion: no-preference) and (hover: none) {
+  html:has(body[data-view="list"]) { scroll-snap-type: y proximity; }
+  #hero, #manifesto, #journeys, .tier, .explore { scroll-snap-align: start; }
+  .shelf { scroll-snap-align: start; }
+}
+
+/* study tabs follow the top bar, so nothing scrolls into a gap above them */
+.study-tabs { background: color-mix(in srgb, var(--bg) 94%, transparent); transition: transform 700ms var(--ease-lux); padding-left: var(--edge); padding-right: var(--edge); }
+html.nav-hidden .study-tabs { transform: translateY(calc(-1 * (var(--top-h) + env(safe-area-inset-top)))); }
+
+/* map view never shows a light page behind or before the map */
+.map-host, #map-host.wjmap, #map-host .maplibregl-map, #map-host canvas { background: var(--bg); }
+
+/* hero: grape cluster framing */
+.hero-poster, .hero-video { object-position: 50% 22%; }
+@media (min-aspect-ratio: 1/1) { .hero-poster, .hero-video { object-position: 72% 35%; } }
+#tier-1 .chapter-media > img, #tier-1 .chapter-media > video { object-position: 66% 50%; }

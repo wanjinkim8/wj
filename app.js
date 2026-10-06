@@ -224,9 +224,7 @@
     const v = $('.hero-video');
     if (!v || reduce || saveData()) return;
     const portrait = matchMedia('(max-aspect-ratio: 1/1)').matches;
-    const name = portrait ? 'hero_mobile' : 'hero_desktop';
-    const size = innerWidth >= 900 && !portrait ? 'd' : 'm';
-    v.src = `media/${name}-${size}.mp4`;
+    v.src = portrait ? 'media/hero_grape-m.mp4' : `media/hero_grape-${innerWidth >= 1100 ? 'd' : 'dm'}.mp4`;
     v.addEventListener('playing', () => v.classList.add('on'), { once: true });
     v.play().catch(() => {});
     new IntersectionObserver((e) => (e[0].isIntersecting ? v.play().catch(() => {}) : v.pause())).observe($('#hero'));
@@ -243,7 +241,6 @@
       .from('.hero-copy .eyebrow', { autoAlpha: 0, x: -24, duration: 1.4 }, 0.5)
       .from('.hero-title .ln > span', { yPercent: 118, duration: 1.8, stagger: 0.14 }, 0.6)
       .from('.hero-ko', { autoAlpha: 0, y: 20, duration: 1.4 }, 1.3)
-      .from('.hero-cta > *', { autoAlpha: 0, y: 18, duration: 1.2, stagger: 0.1, clearProps: 'transform' }, 1.5)
       .from('.hero-foot > *', { autoAlpha: 0, y: 12, duration: 1.2, stagger: 0.08 }, 1.7)
       .from('#topbar', { autoAlpha: 0, duration: 1.2, clearProps: 'opacity,visibility' }, 1.2);
     $$('[data-count]').forEach((el) => {
@@ -251,14 +248,15 @@
       heroTL.to(o, { v: end, duration: 1.8, ease: 'power2.out', onUpdate: () => (el.textContent = Math.round(o.v)) }, 1.7);
     });
     gsap.to('.hero-poster, .hero-video', { yPercent: 9, ease: 'none', scrollTrigger: { trigger: '#hero', start: 'top top', end: 'bottom top', scrub: true } });
-    gsap.to('.hero-copy', { autoAlpha: 0, y: -70, ease: 'none', scrollTrigger: { trigger: '#hero', start: '28% top', end: '78% top', scrub: true } });
   }
   const playIntro = () => heroTL && heroTL.play();
 
   /* ---------------- age gate ---------------- */
+  // age gate is off for now (owner, 2026-10-06); flip to true when the site needs it again
+  const AGE_GATE = false;
   function setupGate() {
     const g = $('#gate');
-    if (localStorageGet('wj-age') === '1') return Promise.resolve();
+    if (!AGE_GATE || localStorageGet('wj-age') === '1') return Promise.resolve();
     g.hidden = false;
     document.documentElement.classList.add('locked');
     lenis && lenis.stop();
@@ -314,8 +312,8 @@
   let fxTriggers = [];
   function setupSmoothScroll() {
     if (!fine || reduce || !window.Lenis || !window.gsap || lenis) return;
-    lenis = new Lenis({ lerp: 0.085, wheelMultiplier: 0.9, smoothWheel: true, prevent: (node) => !!(node.closest && node.closest('#sheet, .rail-track, .study-tabs, #map-host, .menu, .gate')) });
-    lenis.on('scroll', () => window.ScrollTrigger && ScrollTrigger.update());
+    lenis = new Lenis({ lerp: 0.085, wheelMultiplier: 0.9, smoothWheel: true, virtualScroll: (d) => sceneWheel(d), prevent: (node) => !!(node.closest && node.closest('#sheet, .rail-track, .study-tabs, #map-host, .menu, .gate')) });
+    lenis.on('scroll', () => { window.ScrollTrigger && ScrollTrigger.update(); settleScene(); });
     gsap.ticker.add((t) => lenis && lenis.raf(t * 1000));
     gsap.ticker.lagSmoothing(0);
   }
@@ -364,49 +362,118 @@
     if (window.SplitText) gsap.registerPlugin(SplitText);
     fxTriggers.forEach((t) => t && t.kill()); fxTriggers = [];
     const add = (tw) => { if (!tw) return; if (tw.scrollTrigger) fxTriggers.push(tw.scrollTrigger); else if (tw.kill) fxTriggers.push(tw); };
-    const once = (el, vars, start = 'top 86%') => el && add(gsap.from(el, { ...vars, scrollTrigger: { trigger: el, start, once: true } }));
+    // every scene plays its whole entrance once it is clearly on screen; nothing waits half done
+    const scene = (trigger, start = 'top 62%') => gsap.timeline({ defaults: { ease: 'expo.out' }, scrollTrigger: { trigger, start, once: true } });
 
-    // manifesto: the sentence lights up word by word as it is read
-    const words = splitWords($('.mf-lead'));
-    if (words.length) add(gsap.fromTo(words, { opacity: 0.14 }, { opacity: 1, ease: 'none', stagger: 0.12, scrollTrigger: { trigger: '.mf-lead', start: 'top 80%', end: 'bottom 48%', scrub: 0.6 } }));
-    add(gsap.fromTo('.mf-main', { clipPath: 'inset(14% 12% 14% 12%)' }, { clipPath: 'inset(0% 0% 0% 0%)', ease: 'none', scrollTrigger: { trigger: '.mf-media', start: 'top 92%', end: 'top 28%', scrub: true } }));
-    add(gsap.fromTo('.mf-main img', { yPercent: -7 }, { yPercent: 7, ease: 'none', scrollTrigger: { trigger: '.mf-media', start: 'top bottom', end: 'bottom top', scrub: true } }));
-    add(gsap.fromTo('.mf-inset', { yPercent: 30 }, { yPercent: -12, ease: 'none', scrollTrigger: { trigger: '.mf-media', start: 'top bottom', end: 'bottom top', scrub: true } }));
-    once($('.manifesto .eyebrow'), { autoAlpha: 0, x: -20, duration: 1.2, ease: 'expo.out' });
-    once($('.mf-body'), { autoAlpha: 0, y: 30, duration: 1.4, ease: 'expo.out' });
-    once($('.mf-ask'), { autoAlpha: 0, y: 30, duration: 1.4, ease: 'expo.out' });
+    // manifesto: the label photo opens like a curtain, then the words rise
+    const mf = $('#manifesto');
+    if (mf) {
+      const sp = splitLines($('.mf-lead', mf));
+      const tl = scene(mf, 'top 55%');
+      tl.fromTo($('.mf-media', mf), { clipPath: 'inset(100% 0% 0% 0%)' }, { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.5, ease: 'expo.inOut' })
+        .fromTo($('.mf-media img', mf), { scale: 1.18 }, { scale: 1, duration: 2.6, ease: 'power3.out' }, 0)
+        .from($('.eyebrow', mf), { autoAlpha: 0, x: -20, duration: 1.1 }, 0.7)
+        .from(sp ? sp.lines : $('.mf-lead', mf), { yPercent: 110, duration: 1.4, stagger: 0.09 }, 0.8)
+        .from($$('.mf-body, .mf-ask', mf), { autoAlpha: 0, y: 24, duration: 1.2, stagger: 0.12 }, 1.2);
+      add(tl);
+    }
 
     // section heads
     $$('.sec-head').forEach((h) => {
       const sp = splitLines($('h2', h));
-      const tl = gsap.timeline({ scrollTrigger: { trigger: h, start: 'top 82%', once: true } });
-      tl.from($('.eyebrow', h), { autoAlpha: 0, x: -20, duration: 1.2, ease: 'expo.out' })
-        .from(sp ? sp.lines : $('h2', h), { yPercent: 110, duration: 1.5, stagger: 0.1, ease: 'expo.out' }, 0.1)
-        .from($('p', h) || [], { autoAlpha: 0, y: 20, duration: 1.3, ease: 'expo.out' }, 0.4);
+      const tl = scene(h, 'top 78%');
+      tl.from($('.eyebrow', h), { autoAlpha: 0, x: -20, duration: 1.1 })
+        .from(sp ? sp.lines : $('h2', h), { yPercent: 110, duration: 1.4, stagger: 0.09 }, 0.1)
+        .from($('p', h) || [], { autoAlpha: 0, y: 20, duration: 1.2 }, 0.4);
       add(tl);
     });
-    add(gsap.from('.jrow', { autoAlpha: 0, y: 34, duration: 1.3, stagger: 0.08, ease: 'expo.out', clearProps: 'transform', scrollTrigger: { trigger: '#jlist', start: 'top 82%', once: true } }));
+    add(gsap.from('.jrow', { autoAlpha: 0, y: 30, duration: 1.2, stagger: 0.08, ease: 'expo.out', clearProps: 'transform', scrollTrigger: { trigger: '#jlist', start: 'top 80%', once: true } }));
 
-    // chapters: the scene settles in, the copy rises, and the shelf slides over it
+    // chapters: the scene settles in one move; when the shelf arrives the copy steps aside in one move
     $$('.tier').forEach((sec) => {
       const media = $('.chapter-media', sec), shelf = $('.shelf', sec), copy = $('.chapter-copy', sec);
-      add(gsap.fromTo(media, { scale: 1.18 }, { scale: 1, ease: 'none', scrollTrigger: { trigger: sec, start: 'top bottom', end: 'top top', scrub: true } }));
-      add(gsap.to(media, { yPercent: 10, ease: 'none', scrollTrigger: { trigger: shelf, start: 'top bottom', end: 'top top', scrub: true } }));
-      add(gsap.to(copy, { yPercent: -16, autoAlpha: 0, ease: 'none', scrollTrigger: { trigger: shelf, start: 'top 80%', end: 'top 22%', scrub: true } }));
       const sp = splitLines($('.chapter-title', sec));
-      const tl = gsap.timeline({ scrollTrigger: { trigger: sec, start: 'top 55%', once: true } });
-      tl.from($('.chapter-no', sec), { yPercent: 35, autoAlpha: 0, duration: 1.8, ease: 'expo.out' })
-        .from($('.chapter-meta', sec), { autoAlpha: 0, x: -18, duration: 1.2, ease: 'expo.out' }, 0.25)
-        .from(sp ? sp.lines : $('.chapter-title', sec), { yPercent: 112, duration: 1.6, stagger: 0.1, ease: 'expo.out' }, 0.3)
-        .from($('.chapter-body', sec), { autoAlpha: 0, y: 22, duration: 1.3, ease: 'expo.out' }, 0.6);
+      const tl = scene(sec, 'top 60%');
+      tl.fromTo(media, { scale: 1.14 }, { scale: 1, duration: 2.8, ease: 'power3.out' })
+        .from($('.chapter-meta', sec), { autoAlpha: 0, x: -18, duration: 1.1 }, 0.35)
+        .from(sp ? sp.lines : $('.chapter-title', sec), { yPercent: 112, duration: 1.4, stagger: 0.09 }, 0.4)
+        .from($('.chapter-body', sec), { autoAlpha: 0, y: 22, duration: 1.2 }, 0.7)
+        .from($('.chapter-no', sec), { autoAlpha: 0, y: 40, duration: 1.6 }, 0.5);
       add(tl);
+      const away = gsap.to(copy, { autoAlpha: 0, y: -36, duration: 0.7, ease: 'power2.inOut', paused: true });
+      add(ScrollTrigger.create({ trigger: shelf, start: 'top 72%', onEnter: () => away.play(), onLeaveBack: () => away.reverse() }));
       add(ScrollTrigger.create({ trigger: sec, start: 'top bottom', endTrigger: shelf, end: 'top top', onToggle: (self) => chapterVideo(media, self.isActive) }));
     });
 
     // explore + footer
-    add(gsap.from('.tile', { autoAlpha: 0, y: 60, duration: 1.5, stagger: 0.12, ease: 'expo.out', clearProps: 'transform', scrollTrigger: { trigger: '.bento', start: 'top 85%', once: true } }));
-    once($('.foot-brand .logo-xl'), { yPercent: 30, autoAlpha: 0, duration: 1.8, ease: 'expo.out' }, 'top 92%');
+    add(gsap.from('.tile', { autoAlpha: 0, y: 50, duration: 1.4, stagger: 0.12, ease: 'expo.out', clearProps: 'transform', scrollTrigger: { trigger: '.bento', start: 'top 82%', once: true } }));
+    const fl = $('.foot-brand .logo-xl');
+    if (fl) add(gsap.from(fl, { yPercent: 30, autoAlpha: 0, duration: 1.8, ease: 'expo.out', scrollTrigger: { trigger: fl, start: 'top 92%', once: true } }));
     ScrollTrigger.refresh();
+    setupSnap();
+  }
+
+  /* one scroll, one scene: a wheel gesture at a scene moves exactly one scene in that direction.
+     Long sections scroll freely and stop at their edges; nothing is left half way. */
+  const SC = { anchors: [], free: [], busy: false, acc: 0, accT: 0, settleT: 0 };
+  function buildAnchors() {
+    SC.anchors = []; SC.free = [];
+    if (currentView !== 'list') return;
+    const vh = innerHeight;
+    const top = (el) => el.getBoundingClientRect().top + scrollY;
+    const add = (y) => SC.anchors.push(Math.max(0, Math.round(y)));
+    const range = (a, b) => { if (b - a > 8) { SC.free.push([Math.round(a), Math.round(b)]); add(a); add(b); } else add(a); };
+    const sec = (el) => { if (!el || el.hidden) return; const t = top(el); range(t, t + el.offsetHeight - vh); };
+    sec($('#hero')); sec($('#manifesto')); sec($('#journeys'));
+    $$('.tier').forEach((t) => { add(top(t)); const sh = $('.shelf', t); if (sh) { const y = top(sh); range(y, y + sh.offsetHeight - vh); } });
+    sec($('.explore'));
+    add(document.documentElement.scrollHeight - vh);
+    const max = document.documentElement.scrollHeight - vh;
+    SC.anchors = [...new Set(SC.anchors.map((y) => Math.min(y, max)))].sort((x, y) => x - y);
+  }
+  const freeAt = (y, dir) => SC.free.find(([a, b]) => (dir > 0 ? y >= a - 2 && y < b - 2 : y > a + 2 && y <= b + 2));
+  function sceneTo(target) {
+    SC.busy = true;
+    lenis.scrollTo(target, { duration: 1.25, easing: (t) => 1 - Math.pow(1 - t, 4), lock: true, onComplete: () => setTimeout(() => (SC.busy = false), 420) });
+  }
+  function sceneWheel(data) {
+    const e = data.event;
+    if (!e || !e.type.includes('wheel') || e.ctrlKey || currentView !== 'list' || !SC.anchors.length) return true;
+    if (e.target && e.target.closest && e.target.closest('#sheet, .menu, #map-host, .rail-track, .study-tabs, .gate')) return true;
+    const dy = data.deltaY;
+    if (!dy) return true;
+    if (SC.busy) { e.preventDefault(); return false; }
+    const dir = dy > 0 ? 1 : -1;
+    const y = lenis.targetScroll;
+    const fr = freeAt(y, dir);
+    if (fr) {
+      const next = y + dy;
+      if (dir > 0 && next > fr[1]) { e.preventDefault(); sceneTo(fr[1]); return false; }
+      if (dir < 0 && next < fr[0]) { e.preventDefault(); sceneTo(fr[0]); return false; }
+      return true;
+    }
+    e.preventDefault();
+    SC.acc += dy; clearTimeout(SC.accT); SC.accT = setTimeout(() => (SC.acc = 0), 220);
+    if (Math.abs(SC.acc) < 24) return false;
+    SC.acc = 0;
+    const target = dir > 0 ? SC.anchors.find((v) => v > y + 4) : [...SC.anchors].reverse().find((v) => v < y - 4);
+    if (target != null) sceneTo(target);
+    return false;
+  }
+  // keyboard, scrollbar or a resize can stop between scenes: settle to the nearest scene
+  function settleScene() {
+    clearTimeout(SC.settleT);
+    SC.settleT = setTimeout(() => {
+      if (!lenis || SC.busy || currentView !== 'list' || !SC.anchors.length || sheet.open) return;
+      const y = lenis.scroll;
+      if (SC.free.some(([a, b]) => y >= a - 2 && y <= b + 2) || SC.anchors.some((v) => Math.abs(v - y) < 3)) return;
+      const near = SC.anchors.reduce((p, v) => (Math.abs(v - y) < Math.abs(p - y) ? v : p), SC.anchors[0]);
+      sceneTo(near);
+    }, 260);
+  }
+  function setupSnap() {
+    buildAnchors();
+    if (window.ScrollTrigger && !SC.bound) { SC.bound = true; ScrollTrigger.addEventListener('refresh', buildAnchors); }
   }
 
   /* ---------------- sheet ---------------- */
@@ -727,6 +794,7 @@
     updateTopbar();
     if (window.ScrollTrigger) requestAnimationFrame(() => ScrollTrigger.refresh());
     if (lenis) (v === 'map' ? lenis.stop() : lenis.start());
+    if (window.__fxReady) requestAnimationFrame(setupSnap);
   }
   function route() {
     const h = location.hash || '#/';
