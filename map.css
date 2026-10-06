@@ -65,6 +65,7 @@
 .wj-ld { fill: none; stroke: rgba(205, 176, 132, 0.34); stroke-width: 1; }
 .wj-ld--hot { stroke: var(--wj-acc); }
 .wj-dots, .wj-pins { position: absolute; inset: 0; pointer-events: none; }
+.wj-leaders, .wj-dots, .wj-pins { z-index: 2; }
 
 .wj-dot { position: absolute; left: 0; top: 0; width: 0; height: 0; opacity: var(--a, 1); transition: opacity 0.35s var(--wj-out); }
 .wj-dot i {
@@ -105,6 +106,36 @@
 .wj-pins.is-pre .wj-pin, .wjmap.is-flying .wj-pin { opacity: 0; pointer-events: none; transition-duration: 0.16s; transition-delay: 0s; }
 .wj-pins.is-revealing .wj-pin { transition-delay: calc(var(--i, 0) * 38ms); }
 
+/* ---------- area names: famous regions written on the land ---------- */
+.wj-areas { position: absolute; inset: 0; z-index: 1; pointer-events: none; transition: opacity 1.2s var(--wj-out) 0.2s; }
+.wj-areas.is-pre, .wjmap.is-flying .wj-areas { opacity: 0; transition: opacity 0.2s var(--wj-out); }
+.wj-area {
+  position: absolute; left: 0; top: 0; pointer-events: auto; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 4px 6px; border-radius: 8px; white-space: nowrap; text-align: center; isolation: isolate;
+  opacity: var(--a, 0); transition: opacity 0.7s var(--wj-out), visibility 0s;
+}
+/* a soft shade under the name quiets any basemap name it lands on */
+.wj-area::before { content: ""; position: absolute; inset: -6px -12px; z-index: -1; pointer-events: none; background: radial-gradient(closest-side, rgba(14, 12, 10, 0.52), rgba(14, 12, 10, 0.22) 62%, transparent); }
+.wj-area.is-off { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.45s var(--wj-out), visibility 0s linear 0.45s; }
+.wj-area-ko {
+  font-family: var(--wj-font); font-size: 15px; font-weight: 500; line-height: 1.2; letter-spacing: 0.42em; margin-right: -0.42em;
+  color: rgba(230, 211, 173, 0.5); text-shadow: 0 0 10px rgba(9, 8, 7, 0.85), 0 0 2px rgba(9, 8, 7, 0.7);
+  transition: color 0.3s var(--wj-out);
+}
+.wj-area-en {
+  font-family: var(--wj-serif-en); font-size: 10.5px; font-weight: 500; line-height: 1; letter-spacing: 0.3em; margin-right: -0.3em; text-transform: uppercase;
+  color: rgba(205, 176, 132, 0.34); text-shadow: 0 0 8px rgba(9, 8, 7, 0.85);
+  transition: color 0.3s var(--wj-out);
+}
+.wj-area:hover .wj-area-ko, .wj-area:focus-visible .wj-area-ko { color: rgba(240, 226, 196, 0.86); }
+.wj-area:hover .wj-area-en, .wj-area:focus-visible .wj-area-en { color: rgba(205, 176, 132, 0.66); }
+.wj-area:focus-visible { opacity: 1; }
+@container (max-width: 899.98px) {
+  .wj-area { padding: 3px 4px; }
+  .wj-area-ko { font-size: 13px; letter-spacing: 0.32em; margin-right: -0.32em; }
+  .wj-area-en { display: none; }
+}
+
 /* ---------- breadcrumb ---------- */
 .wj-crumbs {
   position: absolute; z-index: 6; left: 16px; top: calc(var(--wjmap-top, 0px) + 14px); height: 42px;
@@ -142,7 +173,8 @@ button.wj-crumb:hover { color: var(--wj-ink); }
 .wj-index-in:not(.is-in) .wj-row-bar i { transform: scaleX(0); }
 .wj-index-in.is-in .wj-row-bar i { transition: transform 1s var(--wj-out) calc(380ms + var(--i, 0) * 40ms); }
 .wj-row:hover, .wj-row.is-hot { color: var(--wj-ink); background: rgba(242, 236, 227, 0.055); }
-.wj-row[aria-current] { color: var(--wj-ink); background: rgba(205, 176, 132, 0.12); box-shadow: inset 2px 0 0 var(--wj-acc); }
+.wj-row[aria-current], .wj-row[aria-current]:hover, .wj-row[aria-current].is-hot { color: var(--wj-acc); }
+.wj-row[aria-current] .wj-row-ct { color: var(--wj-acc-2); }
 .wj-idx-hint { font-size: 12px; color: var(--wj-faint); }
 .wj-idx-art { background: var(--art) center 42% / cover no-repeat; -webkit-mask-image: linear-gradient(180deg, #000 20%, transparent 96%); mask-image: linear-gradient(180deg, #000 20%, transparent 96%); opacity: 0.5; }
 
@@ -178,7 +210,6 @@ button.wj-crumb:hover { color: var(--wj-ink); }
   .wj-idx-list li { flex: none; scroll-snap-align: start; }
   .wj-row, .wj-row:has(.wj-row-bar) { display: inline-flex; align-items: center; gap: 7px; width: auto; min-height: 42px; padding: 0 15px; border-radius: 999px; background: rgba(242, 236, 227, 0.06); box-shadow: inset 0 0 0 1px var(--wj-line); white-space: nowrap; }
   .wj-row:active { background: rgba(242, 236, 227, 0.1); }
-  .wj-row[aria-current] { box-shadow: inset 0 0 0 1px rgba(205, 176, 132, 0.6); }
   .wj-index-in .wj-stag { transform: translate3d(10px, 0, 0); }
 }
 
@@ -225,8 +256,8 @@ button.wj-crumb:hover { color: var(--wj-ink); }
 .wj-tip-hl { margin-top: 4px; font-size: 13px; color: var(--wj-ink-2); }
 .wj-tip-meta { margin-top: 4px; font-size: 12.5px; color: var(--wj-acc-2); font-variant-numeric: tabular-nums; }
 .wj-tip-bottles { display: flex; gap: 6px; margin-top: 11px; }
-.wj-thumb { position: relative; flex: none; width: 48px; aspect-ratio: 3 / 4; border-radius: 8px; overflow: hidden; background: #1a1714; box-shadow: inset 0 0 0 1px var(--wj-line); }
-.wj-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 62%; }
+.wj-thumb { position: relative; flex: none; width: 48px; aspect-ratio: 2 / 3; border-radius: 8px; overflow: hidden; background: #1a1714; box-shadow: inset 0 0 0 1px var(--wj-line); }
+.wj-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 80%; }
 
 /* ---------- region panel ---------- */
 .wj-panel { position: absolute; z-index: 8; display: flex; flex-direction: column; background: var(--wj-panel); -webkit-backdrop-filter: blur(24px) saturate(1.1); backdrop-filter: blur(24px) saturate(1.1); color: var(--wj-ink); }
@@ -293,9 +324,11 @@ button.wj-crumb:hover { color: var(--wj-ink); }
 }
 .wj-card:hover { background: rgba(242, 236, 227, 0.06); box-shadow: inset 0 0 0 1px var(--wj-line-2); }
 .wj-card:active { transform: scale(0.985); }
-.wj-card-stage { position: relative; display: grid; place-items: center; width: 100%; aspect-ratio: 3 / 4; border-radius: 11px; overflow: hidden; background: radial-gradient(70% 60% at 50% 40%, rgba(242, 228, 200, 0.1), transparent 72%), linear-gradient(180deg, #211d18, #151310); box-shadow: inset 0 0 0 1px var(--wj-line); }
-.wj-card-stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 62%; transform: scale(1.001); transition: transform 0.6s var(--wj-out); }
+.wj-card-stage { position: relative; display: grid; place-items: center; width: 100%; aspect-ratio: 2 / 3; border-radius: 11px; overflow: hidden; background: radial-gradient(70% 60% at 50% 40%, rgba(242, 228, 200, 0.1), transparent 72%), linear-gradient(180deg, #211d18, #151310); box-shadow: inset 0 0 0 1px var(--wj-line); }
+.wj-card-stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 80%; transform: scale(1.001); transition: transform 0.6s var(--wj-out); }
 .wj-card:hover .wj-card-stage img { transform: scale(1.06); }
+/* champagne and sparkling labels sit lower on the bottle */
+.wjmap .is-fizz img { object-position: 50% 100%; }
 .wj-ph-bottle { width: 22px; height: 66px; stroke: rgba(242, 236, 227, 0.2); stroke-width: 1.2; }
 .wj-card-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; padding: 3px 4px 2px 0; }
 .wj-card-kind { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--wj-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -354,6 +387,7 @@ button.wj-crumb:hover { color: var(--wj-ink); }
   .wjmap .wj-stag { transform: none !important; transition: opacity 0.2s linear !important; transition-delay: 0s !important; }
   .wjmap .wj-row-bar i { transition: none !important; }
   .wjmap .wj-dot i { transition: none; }
+  .wjmap .wj-areas, .wjmap .wj-area { transition-duration: 0.2s !important; transition-delay: 0s !important; }
 }
 
 /* ---------- host defaults: W.J site mounts into #map-host inside #view-map ---------- */

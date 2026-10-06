@@ -52,6 +52,11 @@
   const unMercY = (y) => (2 * Math.atan(Math.exp(Math.PI * (1 - 2 * y))) - Math.PI / 2) / RAD;
 
   const thumb = (base, w) => (w && w.img ? base + String(w.img).replace(/^bottles\/(?!s\/)/, 'bottles/s/') : '');
+  // champagne and sparkling bottles carry the label lower, so their crop sits lower too
+  const fizz = (w) => (/샴페인|스파클링/.test((w && w.type) || '') ? ' is-fizz' : '');
+  // a few bottles carry the label higher than most (Bordeaux and Sauternes shapes); their crop moves up to it. key: image file name
+  const FOCUS = { 22: 60, 211: 61, 212: 62, 310: 60, 401: 68, 409: 56, 504: 62, 508: 60 };
+  const focus = (w) => { const y = FOCUS[String((w && w.img) || '').replace(/^.*\//, '').replace(/\.\w+$/, '')]; return y ? ` style="object-position:50% ${y}%"` : ''; };
   const ICON = {
     back: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6 8.5 12l6 6"/></svg>',
     close: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg>',
@@ -94,6 +99,31 @@
   }
 
   /* ---------- TopoJSON (enough of it) ---------- */
+  // the country's land drawn once into a small lon/lat grid, so an area name that has to move stays on land
+  function landMask(features) {
+    try {
+      const rings = [];
+      let w = 180, e = -180, s = 90, n = -90;
+      features.forEach((f) => {
+        const g = f.geometry;
+        (g.type === 'Polygon' ? [g.coordinates] : g.coordinates).forEach((p) => p.forEach((r) => {
+          rings.push(r);
+          r.forEach(([x, y]) => { w = Math.min(w, x); e = Math.max(e, x); s = Math.min(s, y); n = Math.max(n, y); });
+        }));
+      });
+      if (!rings.length || e <= w || n <= s) return null;
+      const N = 512, kx = N / (e - w), ky = N / (n - s);
+      const cv = document.createElement('canvas');
+      cv.width = cv.height = N;
+      const g = cv.getContext('2d', { willReadFrequently: true });
+      g.beginPath();
+      rings.forEach((r) => r.forEach(([x, y], i) => (i ? g.lineTo((x - w) * kx, (n - y) * ky) : g.moveTo((x - w) * kx, (n - y) * ky))));
+      g.fill('evenodd');
+      const px = g.getImageData(0, 0, N, N).data;
+      return (lon, lat) => { const i = Math.floor((lon - w) * kx), j = Math.floor((n - lat) * ky); return i >= 0 && j >= 0 && i < N && j < N && px[(j * N + i) * 4 + 3] > 0; };
+    } catch (err) { return null; }
+  }
+
   function topo(t) {
     const tf = t.transform;
     const arcs = t.arcs.map((a) => {
@@ -159,10 +189,30 @@
       if (!n) continue;
       regions.sort((a, b) => b.n - a.n || b.lat - a.lat);
       const anchor = ANCHOR[key] || [regions.reduce((a, r) => a + r.lon, 0) / regions.length, regions.reduce((a, r) => a + r.lat, 0) / regions.length];
-      out[key] = { key, ko: c.ko || key, en: c.en || '', headline: c.headline || '', art: c.art || '', regions, n, anchor };
+      out[key] = { key, ko: c.ko || key, en: c.en || '', headline: c.headline || '', art: c.art || '', regions, n, anchor, areas: areasOf(c.regions || [], regions) };
       total += n; max = Math.max(max, n);
     }
     return { byId, countries: out, list: Object.values(out), total, max };
+  }
+  // famous wine regions (level 지방) written on the map as area names, with or without wines.
+  // One that already carries a pin keeps only its pin. pts: the region and every area under it, for zooming in.
+  function areasOf(raw, pinned) {
+    const pinKey = new Set(pinned.map((r) => r.key)), pinKo = new Set(pinned.map((r) => r.ko));
+    const byKo = {};
+    raw.forEach((r) => { if (r && r.ko && !byKo[r.ko]) byKo[r.ko] = r; });
+    const rootOf = (r) => { let q = r; for (let n = 0; n < 6 && q.parent && byKo[q.parent] && byKo[q.parent] !== q; n++) q = byKo[q.parent]; return q; };
+    const seen = new Set(), out = [];
+    raw.forEach((r) => {
+      if (!r || r.level !== '지방' || r.lat == null || r.lon == null) return;
+      const ko = r.ko || r.en || r.key;
+      if (seen.has(ko)) return;
+      seen.add(ko);
+      if (pinKey.has(r.key) || pinKo.has(ko)) return;
+      const pts = [[r.lon, r.lat]];
+      raw.forEach((q) => { if (q && q !== r && q.lat != null && q.lon != null && rootOf(q).ko === ko) pts.push([q.lon, q.lat]); });
+      out.push({ key: r.key, ko, en: r.en || '', lat: r.lat, lon: r.lon, pts });
+    });
+    return out;
   }
 
   /* ---------- base style ---------- */
@@ -197,7 +247,7 @@
           l.paint['text-halo-width'] = 0;
           break;
         case 'place_town': label(l, 10.5, PAL.labelDim, 7.2, true); break;
-        case 'place_city': label(l, 11, PAL.label, 5.6); break;
+        case 'place_city': label(l, 11, PAL.label, 6.5); break; // from just past the country views, which belong to the area names
         case 'place_city_large': label(l, 12, PAL.label, 4.4); break;
         case 'place_country_other': case 'place_country_minor': case 'place_country_major':
           label(l, 11.5, 'rgba(165, 155, 140, 0.55)', mini ? 0 : 3.4);
@@ -315,6 +365,7 @@
         <svg class="wj-leaders" aria-hidden="true"><path class="wj-ld"/><path class="wj-ld wj-ld--hot"/></svg>
         <div class="wj-dots" aria-hidden="true"></div>
         <div class="wj-pins" role="group" aria-label="지도 위 나라와 산지"></div>
+        <div class="wj-areas" role="group" aria-label="이름난 와인 지방"></div>
       </div>
       <div class="wj-loader" role="status"><span class="wj-loader-ring" aria-hidden="true"></span><span class="wj-loader-text">지도를 불러오고 있습니다</span></div>
       <nav class="wj-crumbs" aria-label="지도 위치"><button class="wj-back" type="button" aria-label="한 단계 위로" hidden>${ICON.back}</button><ol></ol></nav>
@@ -335,7 +386,7 @@
     const $ = (s) => root.querySelector(s);
     const el = {
       stage: $('.wj-stage'), canvas: $('.wj-canvas'), halo: $('.wj-halo'), leaders: $('.wj-leaders'), ld: $('.wj-ld'), ldHot: $('.wj-ld--hot'),
-      dots: $('.wj-dots'), pins: $('.wj-pins'), loader: $('.wj-loader'), crumbs: $('.wj-crumbs ol'), back: $('.wj-back'),
+      dots: $('.wj-dots'), pins: $('.wj-pins'), areas: $('.wj-areas'), loader: $('.wj-loader'), crumbs: $('.wj-crumbs ol'), back: $('.wj-back'),
       index: $('.wj-index'), indexIn: $('.wj-index-in'), ctrl: $('.wj-ctrl'), tip: $('.wj-tip'), wipe: $('.wj-wipe'),
       probe: $('.wj-probe'), panel: $('.wj-panel'), scroll: $('.wj-panel-scroll'), body: $('.wj-panel-body'), grip: $('.wj-grip'), sr: $('.wj-sr'),
     };
@@ -386,15 +437,15 @@
     }
     const priceOf = (w) => (w.price && w.price.v) || null;
     function cardHTML(w, i) {
-      const p = priceOf(w), v = w.vivino, axis = (w.axis || []).join(' · ');
-      const label = [w.name, w.type, p ? won(p) : '가격 확인 중', v ? `Vivino ${v.r.toFixed(1)}` : '', axis ? `꼭 마셔 볼 이유 ${axis}` : ''].filter(Boolean).join(', ');
+      const p = priceOf(w), v = w.vivino, RL = { 가성비: '가성비 와인', 스토리: '스토리 와인', 기준: '교과서 와인' }, axis = w.route_pending ? '' : (RL[w.route] || '');
+      const label = [w.name, w.type, p ? won(p) : '가격 확인 중', v ? `Vivino ${v.r.toFixed(1)}` : '', axis ? `W.J 가 고른 이유 ${axis}` : ''].filter(Boolean).join(', ');
       return `<li class="wj-stag" style="--i:${i}"><button class="wj-card" type="button" data-wine="${esc(w.id)}" aria-label="${esc(label)}">
-        <span class="wj-card-stage">${w.img ? `<img src="${esc(thumb(base, w))}" alt="" loading="lazy" decoding="async">` : ICON.bottle}</span>
+        <span class="wj-card-stage${fizz(w)}">${w.img ? `<img src="${esc(thumb(base, w))}"${focus(w)} alt="" loading="lazy" decoding="async">` : ICON.bottle}</span>
         <span class="wj-card-body">
           <span class="wj-card-kind"><i class="wj-type" data-type="${esc(w.type)}"></i>${esc(w.type)}${w.grape ? ` · ${esc(w.grape)}` : ''}</span>
           <strong class="wj-card-name">${esc(w.name)}</strong>
           ${w.hook ? `<span class="wj-card-hook">${esc(w.hook)}</span>` : ''}
-          <span class="wj-card-meta"><span class="wj-price">${p ? won(p) : '가격 확인 중'}</span>${v ? `<span class="wj-viv">Vivino <b>${v.r.toFixed(1)}</b></span>` : ''}${axis ? `<span class="wj-axis">꼭 마셔 볼 이유 · ${esc(axis)}</span>` : ''}</span>
+          <span class="wj-card-meta"><span class="wj-price">${p ? won(p) : '가격 확인 중'}</span>${v ? `<span class="wj-viv">Vivino <b>${v.r.toFixed(1)}</b></span>` : ''}${axis ? `<span class="wj-axis">${esc(axis)}</span>` : ''}</span>
         </span>
       </button></li>`;
     }
@@ -536,11 +587,55 @@
       el.pins.classList.add('is-pre');
       el.leaders.classList.add('is-pre');
     }
-    function measurePins() { pins.forEach((p) => { p.w = p.el.offsetWidth || 60; p.h = p.el.offsetHeight || 24; }); }
+    function measurePins() {
+      pins.forEach((p) => { p.w = p.el.offsetWidth || 60; p.h = p.el.offsetHeight || 24; });
+      areas.forEach(measureArea);
+    }
+    function measureArea(a) { a.w = a.el.offsetWidth || 80; a.h = a.el.offsetHeight || 30; }
+
+    /* ----- area names: famous regions, quiet, beneath the pins ----- */
+    let areas = [];
+    let areasKey = '';
+    let land = null; // { ck, on(lon, lat) } for the open country, see landMask
+    function buildAreas() {
+      const key = S.ck || '_world';
+      if (key === areasKey) return;
+      areasKey = key;
+      el.areas.textContent = '';
+      areas = S.ck ? D.countries[S.ck].areas.map((a) => ({ ...a })) : [];
+      areas.forEach((a) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'wj-area is-off';
+        b.dataset.area = a.key;
+        b.setAttribute('aria-label', `${a.ko} 지방 크게 보기`);
+        b.innerHTML = `<span class="wj-area-ko">${esc(a.ko)}</span>${a.en ? `<span class="wj-area-en" lang="en">${esc(a.en)}</span>` : ''}`;
+        el.areas.appendChild(b);
+        a.el = b; a.tx = ''; a.cand = -1; a.av = '';
+      });
+      areas.forEach(measureArea);
+      el.areas.classList.add('is-pre');
+    }
+    // zoom in on an area name; it has no wines of its own to list, so no panel opens
+    function zoomArea(a) {
+      if (!map) return;
+      spinStop(true);
+      let w = 180, e = -180, s = 90, n = -90;
+      a.pts.forEach(([lo, la]) => { w = Math.min(w, lo); e = Math.max(e, lo); s = Math.min(s, la); n = Math.max(n, la); });
+      const cx = (w + e) / 2, cy = (s + n) / 2;
+      const sx = Math.max((e - w) * 1.6, 1.8), sy = Math.max((n - s) * 1.6, 1.2);
+      const f = fit([cx - sx / 2, cy - sy / 2, cx + sx / 2, cy + sy / 2], map.getPadding(), 8.4);
+      S.userMoved = true;
+      map.easeTo({ center: f.center, zoom: clamp(Math.max(f.zoom, map.getZoom() + 0.8), 0, 8.6), duration: reduce() ? 0 : 1500, easing: easeIO, essential: true });
+      el.sr.textContent = `${a.ko} 지방을 크게 보여 드립니다.`;
+    }
     function revealPins() {
       el.pins.classList.add('is-revealing');
       el.pins.classList.remove('is-pre');
       el.leaders.classList.remove('is-pre');
+      // area names wait for the basemap names to settle (readBaseLabels), with a fallback
+      clearTimeout(revealPins.a);
+      revealPins.a = setTimeout(() => el.areas.classList.remove('is-pre'), reduce() ? 0 : 3200);
       pins.forEach((p) => p.el.classList.remove('is-new'));
       clearTimeout(revealPins.t);
       revealPins.t = setTimeout(() => el.pins.classList.remove('is-revealing'), 1400);
@@ -573,7 +668,10 @@
     }
     const hit = (a, b, pad) => !(a.x + a.w + pad <= b.x || b.x + b.w + pad <= a.x || a.y + a.h + pad <= b.y || b.y + b.h + pad <= a.y);
     let ui = [];
+    let insetT = 0, insetB = 1e5; // the host's top bar and tab bar sit over the map
     function measureUI() {
+      insetT = el.probe.offsetTop || 0;
+      insetB = insetT + (el.probe.offsetHeight || size.h);
       const rr = root.getBoundingClientRect();
       const rect = (n) => { if (!n || n.hidden || n.offsetParent === null) return null; const b = n.getBoundingClientRect(); return b.width ? { x: b.left - rr.left, y: b.top - rr.top, w: b.width, h: b.height } : null; };
       ui = [rect(root.querySelector('.wj-crumbs')), rect(el.ctrl)];
@@ -663,8 +761,87 @@
       }
       el.ld.setAttribute('d', leaders.join(''));
       el.ldHot.setAttribute('d', hotLeader);
+      placeAreas(z, W, H, placed, dotRects);
       if (tipPin) placeTip();
       halo(z);
+    }
+    // area names go last: they take only the room the pins and their labels leave
+    // nearest spots first; a step is half the label (44px at most) plus a gap, tried in half steps
+    const AREA_OFF = [];
+    for (let ox = -3; ox <= 3; ox += 0.5) for (let oy = -3; oy <= 3; oy += 0.5) AREA_OFF.push([ox, oy]);
+    AREA_OFF.sort((a, b) => Math.hypot(a[0] * 1.6, a[1]) - Math.hypot(b[0] * 1.6, b[1]) || b[0] - a[0]);
+    function placeAreas(z, W, H, placed, dotRects) {
+      if (!areas.length) return;
+      // full around the country view, gone a little past it in either direction
+      const fade = S.level === 'world' || !S.cz ? 0 : clamp((z - (S.cz - 1.5)) / 0.9, 0, 1) * clamp((S.cz + 2.5 - z) / 1.2, 0, 1);
+      const taken = [];
+      const base = fade > 0.02 ? baseLabels.map((b) => { const p = map.project([b.lon, b.lat]); return { x: p.x - b.w / 2, y: p.y - b.h / 2, w: b.w, h: b.h }; }) : [];
+      const onLand = land && land.ck === S.ck ? land.on : null;
+      // -1: blocked by our own marks or the screen edge, otherwise how many basemap names it covers; off the land counts as many
+      const cost = (rc) => {
+        if (!rc || rc.x < 8 || rc.y < insetT + 8 || rc.x + rc.w > W - 8 || rc.y + rc.h > Math.min(H, insetB) - 8) return -1;
+        for (const o of placed) if (hit(rc, o, 4)) return -1; // pin labels carry their own padding
+        for (const o of dotRects) if (hit(rc, o, 6)) return -1;
+        for (const o of ui) if (hit(rc, o, 12)) return -1;
+        for (const o of taken) if (hit(rc, o, 16)) return -1;
+        let n = onLand && !onLand(rc.lon, rc.lat) ? 20 : 0;
+        for (const o of base) if (hit(rc, o, 3)) n++;
+        return n;
+      };
+      for (const a of areas) {
+        let rc = null;
+        if (fade > 0.02) {
+          const pt = map.project([a.lon, a.lat]);
+          const sx = Math.min(a.w * 0.5 + 12, 44), sy = a.h * 0.5 + 10;
+          // a name moves at most about two degrees from its spot; past that it would name the wrong land
+          const deg = 512 * 2 ** z / 360, maxX = 2 * deg, maxY = 1.4 * deg / Math.cos(a.lat * RAD);
+          const box = (k) => { const dx = AREA_OFF[k][0] * sx, dy = AREA_OFF[k][1] * sy; return Math.abs(dx) > maxX || Math.abs(dy) > maxY ? null : { x: pt.x + dx - a.w / 2, y: pt.y + dy - a.h / 2, w: a.w, h: a.h, lon: a.lon + dx / deg, lat: a.lat - dy * Math.cos(a.lat * RAD) / deg }; };
+          // the last spot while it stays clear, else the nearest clear spot on land, else the one covering the fewest basemap names
+          const lastN = a.cand >= 0 ? cost(box(a.cand)) : -1;
+          let best = -1, bestN = Infinity;
+          if (lastN === 0) { best = a.cand; bestN = 0; }
+          for (let k = 0; bestN > 0 && k < AREA_OFF.length; k++) { const n = cost(box(k)); if (n >= 0 && n < bestN) { best = k; bestN = n; } }
+          if (lastN > 0 && lastN <= bestN) best = a.cand;
+          a.cand = best;
+          if (best >= 0) rc = box(best);
+        }
+        if (rc) {
+          taken.push(rc);
+          const t = `translate3d(${rc.x.toFixed(1)}px,${rc.y.toFixed(1)}px,0)`;
+          if (t !== a.tx) { a.el.style.transform = t; a.tx = t; }
+        }
+        const v = rc ? fade.toFixed(2) : '0';
+        if (v !== a.av) { a.el.style.setProperty('--a', v); a.av = v; }
+        a.el.classList.toggle('is-off', !rc);
+      }
+    }
+    // basemap place names, read once the map settles and projected again every frame
+    const BASE_LABELS = { place_city_large: [12, 0.02], place_city: [11, 0.02], place_town: [10.5, 0.02], place_country_major: [11.5, 0.12], place_country_minor: [11.5, 0.12], place_country_other: [11.5, 0.12], water_name: [11, 0.3] };
+    let baseLabels = [];
+    function readBaseLabels() {
+      baseLabels = [];
+      if (!map || !S.ready || !areas.length) return;
+      const layers = Object.keys(BASE_LABELS).filter((l) => map.getLayer(l));
+      let fs = [];
+      try { fs = map.queryRenderedFeatures({ layers }); } catch (e) { return; }
+      const seen = new Set();
+      for (const f of fs) {
+        if (!f.geometry || f.geometry.type !== 'Point') continue;
+        const pr = f.properties || {};
+        const name = f.layer.id === 'place_town' ? pr['name:ko'] || '' : pr['name:ko'] || pr.name || '';
+        const [lon, lat] = f.geometry.coordinates;
+        const k = `${name}@${lon.toFixed(2)},${lat.toFixed(2)}`;
+        if (!name || seen.has(k)) continue;
+        seen.add(k);
+        const [size, ls] = BASE_LABELS[f.layer.id];
+        let em = 0;
+        for (const ch of name) em += /[ㄱ-힣]/.test(ch) ? 1 : 0.6;
+        em *= 1 + ls;
+        const lines = Math.max(1, Math.ceil(em / 8));
+        baseLabels.push({ lon, lat, w: Math.min(em, 8) * size + 6, h: lines * size * 1.3 + 4 });
+      }
+      layout();
+      if (S.revealed && !S.flying && el.areas.classList.contains('is-pre')) { clearTimeout(revealPins.a); el.areas.classList.remove('is-pre'); }
     }
     let layoutQueued = false;
     const queueLayout = () => { if (layoutQueued) return; layoutQueued = true; requestAnimationFrame(() => { layoutQueued = false; layout(); }); };
@@ -699,7 +876,7 @@
       const grapes = (r.grapes || []).slice(0, 2).join(' · ');
       return `<p class="wj-tip-nm"><strong>${esc(r.ko)}</strong>${r.en ? `<span lang="en">${esc(r.en)}</span>` : ''}</p>
         <p class="wj-tip-meta">와인 ${r.n}병${grapes ? ` · ${esc(grapes)}` : ''}</p>
-        ${imgs.length ? `<div class="wj-tip-bottles">${imgs.map((w) => `<span class="wj-thumb"><img src="${esc(thumb(base, w))}" alt="" decoding="async"></span>`).join('')}</div>` : ''}`;
+        ${imgs.length ? `<div class="wj-tip-bottles">${imgs.map((w) => `<span class="wj-thumb${fizz(w)}"><img src="${esc(thumb(base, w))}"${focus(w)} alt="" decoding="async"></span>`).join('')}</div>` : ''}`;
     }
     function tipShow(p, now) {
       clearTimeout(tipT);
@@ -866,6 +1043,7 @@
       if (reduce() || dur === 0) { map.jumpTo(cam); queueLayout(); if (S.revealed) revealPins(); return; }
       S.flying = true;
       root.classList.add('is-flying');
+      el.areas.classList.add('is-pre');
       const o = { ...cam, duration: dur, easing: easeIO, essential: true };
       if (fly) map.flyTo({ ...o, curve: 1.3 }); else map.easeTo(o);
       // safety net in case the camera had nowhere to go and no moveend arrives
@@ -912,6 +1090,7 @@
         map.on('render', layout);
         map.on('resize', () => { measureUI(); queueLayout(); });
         map.on('movestart', (e) => { if (e.originalEvent) { S.userMoved = true; spinStop(true); } });
+        map.on('idle', readBaseLabels);
         map.on('moveend', () => {
           if (S.flying) { S.flying = false; root.classList.remove('is-flying'); }
           if (S.revealed) revealPins();
@@ -959,8 +1138,11 @@
         const t = await getJSON(`${base}geo/${ck}.json`);
         if (S.dead || !map || S.ck !== ck) return;
         const tp = topo(t);
-        map.getSource('wj-country').setData({ type: 'FeatureCollection', features: tp.features() });
+        const feats = tp.features();
+        land = { ck, on: landMask(feats) };
+        map.getSource('wj-country').setData({ type: 'FeatureCollection', features: feats });
         map.getSource('wj-country-edge').setData({ type: 'FeatureCollection', features: [tp.edge()] });
+        queueLayout();
       } catch (e) { /* country outline is decoration, keep going */ }
     }
     const LOADER = el.loader.innerHTML;
@@ -1009,11 +1191,12 @@
       S.level = rk ? 'region' : ck ? 'country' : 'world';
       root.dataset.level = S.level;
       root.classList.toggle('no-index', S.level === 'region' && isWide() && size.w < 1280);
-      crumbs(); renderIndex(); buildPins();
+      crumbs(); renderIndex(); buildPins(); buildAreas();
       let refocus = false;
       if (S.level === 'region') openPanel(D.countries[ck], D.countries[ck].regions.find((r) => r.key === rk));
       else refocus = closePanel();
       measureUI();
+      S.cz = ck ? countryCam(ck).zoom : 0;
       if (ck !== prev.ck && map && S.ready) {
         if (ck) loadCountryGeo(ck);
       }
@@ -1031,9 +1214,10 @@
 
     /* ----- events ----- */
     on(root, 'click', (e) => {
-      const t = e.target.closest('[data-go],[data-wine],[data-act],[data-zoom],.wj-pin,.wj-back,.wj-retry');
+      const t = e.target.closest('[data-go],[data-wine],[data-act],[data-zoom],.wj-pin,.wj-area,.wj-back,.wj-retry');
       if (!t || !root.contains(t)) return;
       if (t.classList.contains('wj-retry')) { retry(); return; }
+      if (t.classList.contains('wj-area')) { const a = areas.find((x) => x.key === t.dataset.area); if (a) zoomArea(a); return; }
       if (t.dataset.wine) { if (opts.onOpenWine) opts.onOpenWine(t.dataset.wine); return; }
       if (t.dataset.go) { route(t.dataset.go); return; }
       if (t.dataset.act === 'close') { route(`#/map/${S.ck}`); return; }
@@ -1101,7 +1285,7 @@
     let downAt = null;
     on(el.stage, 'pointerdown', (e) => { downAt = [e.clientX, e.clientY]; });
     on(el.stage, 'click', (e) => {
-      if (!map || e.target.closest('.wj-pin')) return;
+      if (!map || e.target.closest('.wj-pin, .wj-area')) return;
       if (downAt && Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 5) return;
       const rr = root.getBoundingClientRect();
       const x = e.clientX - rr.left, y = e.clientY - rr.top;
@@ -1136,6 +1320,7 @@
       if (root.classList.contains('has-panel') && !isWide()) setSheet(S.sheet === 'closed' ? 'half' : S.sheet);
       else if (isWide()) el.panel.style.removeProperty('--sy');
       measurePins(); measureUI();
+      if (S.ck) S.cz = countryCam(S.ck).zoom;
       if (map) {
         map.resize();
         if (changed && !S.userMoved && !S.flying) map.jumpTo(camFor(null));
@@ -1152,7 +1337,7 @@
         S.dead = true;
         spinStop(true);
         cancelAnimationFrame(fx.raf); cancelAnimationFrame(near.raf); cancelAnimationFrame(roT);
-        clearTimeout(tipT); clearTimeout(revealPins.t);
+        clearTimeout(tipT); clearTimeout(revealPins.t); clearTimeout(revealPins.a);
         io.disconnect(); ro.disconnect();
         cleanups.forEach((f) => f());
         if (map) { try { map.remove(); } catch (e) { /* already gone */ } }
