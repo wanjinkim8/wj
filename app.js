@@ -671,7 +671,8 @@
         ${(g.homes || []).length ? `<div class="homes">${g.homes.map((h) => { const c = Object.values(S.countries).find((x) => x.ko === h.country); return c ? `<a class="chip" href="#/map/${c.key}">${esc(h.country)} ${esc(h.region || '')}</a>` : `<span class="chip">${esc(h.country)} ${esc(h.region || '')}</span>`; }).join('')}</div>` : ''}
       </article>`).join('')}</div>` : pending;
     const cls = ORDER.map((ko) => Object.values(S.countries).find((c) => c.ko === ko)).filter((c) => c && (c.classification || []).length);
-    const clsHTML = cls.length ? `<div class="cls-list">${cls.map((c) => `<details class="cls-country"><summary>${esc(c.ko)}</summary><div class="cls-body">${c.classification.map((x) => `<div class="cls-row"><strong>${esc(x.name)}</strong><p class="easy-only">${esc(x.easy)}</p><p class="expert-only">${esc(x.expert)}</p></div>`).join('')}</div></details>`).join('')}</div>` : pending;
+    const clsList = cls.length ? `<div class="cls-list">${cls.map((c) => `<details class="cls-country"><summary>${esc(c.ko)}</summary><div class="cls-body">${c.classification.map((x) => `<div class="cls-row"><strong>${esc(x.name)}</strong><p class="easy-only">${esc(x.easy)}</p><p class="expert-only">${esc(x.expert)}</p></div>`).join('')}</div></details>`).join('')}</div>` : pending;
+    const clsHTML = cls.length && window.WJClasses ? '<div id="wjc-host"></div>' : clsList;
     const b = S.basics && S.basics.sections;
     const basicsHTML = b ? `<div class="basics">${b.map((s) => `<article class="basic-card"><h3>${esc(s.title)}</h3><p class="easy-only">${esc(s.easy)}</p><p class="expert-only">${esc(s.expert)}</p>${(s.items || []).map((t) => `<div class="term"><strong>${esc(t.term)}${t.plain ? `<em>${esc(t.plain)}</em>` : ''}</strong><p class="easy-only">${esc(t.easy)}</p><p class="expert-only">${esc(t.expert)}</p></div>`).join('')}</article>`).join('')}</div>` : pending;
     const quizzes = ORDER.map((ko) => Object.values(S.countries).find((c) => c.ko === ko)).filter(Boolean).flatMap((c) => (c.quiz || []).map((q, i) => ({ c, q, i })));
@@ -680,8 +681,15 @@
       <section class="s-sec" id="s-aromas"><h2>향 사전</h2><p class="lead">와인 설명에 자주 나오는 향 마흔다섯 가지입니다. 그림을 누르면 그 향이 나는 와인을 보여 드립니다.</p><div class="aroma-groups">${aromaHTML}</div></section>
       <section class="s-sec" id="s-grapes"><h2>품종 사전</h2><p class="lead">포도 품종마다 맛의 생김새와 대표 산지를 모았습니다. 산지를 누르면 지도로 이동합니다.</p>${grapeHTML}</section>
       <section class="s-sec" id="s-classes"><h2>나라와 등급</h2><p class="lead">라벨에 적힌 등급 표기가 무엇을 뜻하는지 나라별로 정리했습니다.</p>${clsHTML}</section>
-      <section class="s-sec" id="s-basics"><h2>마시는 법</h2><p class="lead">맛 읽는 법, 라벨 읽는 법, 온도와 잔, 고르는 요령입니다.</p>${basicsHTML}</section>
+      <section class="s-sec" id="s-basics"><h2>마시는 법</h2><p class="lead">맛 읽는 법, 라벨 읽는 법, 만드는 방식, 온도와 잔, 고르는 요령, 보관하는 법입니다.</p>${basicsHTML}</section>
       <section class="s-sec" id="s-quiz"><h2>퀴즈</h2><p class="lead">나라마다 세 문제씩 준비했습니다. 처음 두 문제는 쉽고 마지막은 어렵습니다.</p>${quizHTML}</section>`;
+    const wjcHost = $('#wjc-host');
+    if (wjcHost && window.WJClasses) {
+      Promise.resolve(WJClasses.mount(wjcHost, {
+        countries: S.countries,
+        depthGetter: () => (document.body.classList.contains('depth-expert') ? 'expert' : 'easy'),
+      })).catch((e) => console.warn('classes', e));
+    }
     setDepth(localStorageGet('depth') || 'easy');
   }
   function localStorageGet(k) { try { return localStorage.getItem(k); } catch { return null; } }

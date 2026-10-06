@@ -542,3 +542,5 @@ html.nav-hidden .study-tabs { transform: translateY(calc(-1 * (var(--top-h) + en
 .hero-poster, .hero-video { object-position: 50% 22%; }
 @media (min-aspect-ratio: 1/1) { .hero-poster, .hero-video { object-position: 72% 35%; } }
 #tier-1 .chapter-media > img, #tier-1 .chapter-media > video { object-position: 66% 50%; }
+/* study body starts on the same left edge as the logo */
+.study-body { max-width: none !important; margin: 0 !important; padding-left: var(--edge) !important; padding-right: var(--edge) !important; }
