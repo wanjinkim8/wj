@@ -29,6 +29,10 @@
     af: [[7, -37], [42, -19.5]],
   };
   const ISO = { france: '250', italy: '380', spain: '724', portugal: '620', germany: '276', austria: '040', usa: '840', chile: '152', argentina: '032', australia: '036', newzealand: '554', southafrica: '710' };
+  const KEEP = {
+    france: ([lon]) => lon > -20,
+    usa: ([lon, lat]) => lon > -130 && lat < 50,
+  };
   // label anchor [lon, lat, side]: side r = text to the right of the dot, l = left
   const PIN = {
     france: [2.4, 46.7, 'l'], spain: [-3.6, 40.2, 'r'], portugal: [-8.1, 39.6, 'l'], italy: [12.5, 42.8, 'r'],
@@ -300,6 +304,10 @@
           x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]);
         });
       }
+      // breathing room around the region; more on wide screens so the world around it stays in view
+      const pad = M.W >= 600 ? 0.16 : 0.03;
+      const dx = (x1 - x0) * pad, dy = (y1 - y0) * pad;
+      x0 -= dx; x1 += dx; y0 -= dy; y1 += dy;
       const k = Math.min(M.W / (x1 - x0), M.H / (y1 - y0));
       return { k, x: M.W / 2 - k * (x0 + x1) / 2, y: M.H / 2 - k * (y0 + y1) / 2 };
     }
@@ -386,10 +394,7 @@
       if (W < 40 || H < 40) return false;
       M.W = W; M.H = H;
       proj = d3.geoNaturalEarth1().rotate([-11, 0]).fitExtent([[0, 0], [W, H]], { type: 'Sphere' });
-      const path = d3.geoPath(proj);
       d3.select(svgEl).attr('viewBox', `0 0 ${W} ${H}`).attr('width', W).attr('height', H);
-      gZoom.selectAll('path.wjc-grat').attr('d', path);
-      gZoom.selectAll('.wjc-land path, .wjc-wine path, .wjc-hi path').attr('d', path);
       return true;
     }
 
@@ -406,9 +411,14 @@
         const name = f.properties && f.properties.name;
         const key = keys.find((k) => (byKey[k].en && byKey[k].en === name) || ISO[k] === String(f.id));
         if (key) {
-          if (key === 'france' && f.geometry.type === 'MultiPolygon') {
-            // drop French Guiana so only metropolitan France lights up
-            f = { ...f, geometry: { type: 'MultiPolygon', coordinates: f.geometry.coordinates.filter((poly) => poly[0][0][0] > -20) } };
+          const keep = KEEP[key];
+          if (keep && f.geometry.type === 'MultiPolygon') {
+            // light up only the wine-growing mainland (France without Guiana, USA without Alaska and Hawaii)
+            const polys = f.geometry.coordinates;
+            const inP = polys.filter((poly) => keep(poly[0][0]));
+            const outP = polys.filter((poly) => !keep(poly[0][0]));
+            if (outP.length) rest.push({ type: 'Feature', id: f.id + '-o', properties: {}, geometry: { type: 'MultiPolygon', coordinates: outP } });
+            if (inP.length) f = { ...f, geometry: { type: 'MultiPolygon', coordinates: inP } };
           }
           wine.push({ key, f });
         } else if (String(f.id) !== '010') rest.push(f);
@@ -428,7 +438,7 @@
       gZoom.append('path').attr('class', 'wjc-grat').datum(d3.geoGraticule10());
       gZoom.append('g').attr('class', 'wjc-land').selectAll('path').data(rest).join('path');
       winePaths = gZoom.append('g').attr('class', 'wjc-wine').selectAll('path').data(wine).join('path')
-        .datum((d) => d).attr('tabindex', 0).attr('role', 'button').attr('focusable', 'true')
+        .attr('tabindex', 0).attr('role', 'button').attr('focusable', 'true')
         .attr('aria-label', (d) => `${byKey[d.key].ko} 등급 보기`);
       hiPaths = gZoom.append('g').attr('class', 'wjc-hi').selectAll('path').data(wine).join('path')
         .attr('fill', `url(#${uid}-foil)`).attr('filter', `url(#${uid}-glow)`);
@@ -469,6 +479,7 @@
         if (M.introDone) labelsEl.classList.remove('is-moving');
         return true;
       };
+      let introStarted = false;
       const ok = relayout();
       root.querySelector('.wjc-wait').remove();
       mapEl.classList.add('is-ready');
@@ -491,7 +502,6 @@
       }
 
       // signature moment: the camera flies from the whole world to the selected region once the map is seen
-      let introStarted = false;
       function startIntro() {
         if (introStarted || !M.ready) return;
         introStarted = true;
