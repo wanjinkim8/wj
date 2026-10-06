@@ -527,8 +527,7 @@ body[data-view="map"] .site-foot { display: none; }
 /* phones and tablets without smooth scroll: native snapping on the big scenes */
 @media (pointer: coarse), (prefers-reduced-motion: no-preference) and (hover: none) {
   html:has(body[data-view="list"]) { scroll-snap-type: y proximity; }
-  #hero, #manifesto, #journeys, .tier, .explore { scroll-snap-align: start; }
-  .shelf { scroll-snap-align: start; }
+  #hero, #manifesto, .tier { scroll-snap-align: start; }
 }
 
 /* study tabs follow the top bar, so nothing scrolls into a gap above them */

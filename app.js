@@ -413,63 +413,56 @@
     setupSnap();
   }
 
-  /* one scroll, one scene: a wheel gesture at a scene moves exactly one scene in that direction.
-     Long sections scroll freely and stop at their edges; nothing is left half way. */
-  const SC = { anchors: [], free: [], busy: false, acc: 0, accT: 0, settleT: 0 };
+  /* scrolling with a few soft stops: the opening trio moves scene by scene, the rest scrolls freely
+     and glides onto a chapter cover only when it comes to rest close to one */
+  const SC = { steps: [], magnets: [], busy: false, acc: 0, accT: 0, settleT: 0 };
   function buildAnchors() {
-    SC.anchors = []; SC.free = [];
+    SC.steps = []; SC.magnets = [];
     if (currentView !== 'list') return;
-    const vh = innerHeight;
-    const top = (el) => el.getBoundingClientRect().top + scrollY;
-    const add = (y) => SC.anchors.push(Math.max(0, Math.round(y)));
-    const range = (a, b) => { if (b - a > 8) { SC.free.push([Math.round(a), Math.round(b)]); add(a); add(b); } else add(a); };
-    const sec = (el) => { if (!el || el.hidden) return; const t = top(el); range(t, t + el.offsetHeight - vh); };
-    sec($('#hero')); sec($('#manifesto')); sec($('#journeys'));
-    $$('.tier').forEach((t) => { add(top(t)); const sh = $('.shelf', t); if (sh) { const y = top(sh); range(y, y + sh.offsetHeight - vh); } });
-    sec($('.explore'));
-    add(document.documentElement.scrollHeight - vh);
-    const max = document.documentElement.scrollHeight - vh;
-    SC.anchors = [...new Set(SC.anchors.map((y) => Math.min(y, max)))].sort((x, y) => x - y);
+    const top = (el) => (el && !el.hidden ? Math.round(el.getBoundingClientRect().top + scrollY) : null);
+    SC.steps = [0, top($('#manifesto')), top($('#journeys'))].filter((v) => v != null);
+    SC.magnets = [...SC.steps, ...$$('.tier').map(top)].filter((v) => v != null).sort((x, y) => x - y);
   }
-  const freeAt = (y, dir) => SC.free.find(([a, b]) => (dir > 0 ? y >= a - 2 && y < b - 2 : y > a + 2 && y <= b + 2));
-  function sceneTo(target) {
+  function sceneTo(target, duration = 1.2) {
+    // never wait on a move that will not happen, and never stay blocked if a move is cut short
+    if (Math.abs(target - lenis.scroll) < 2) return;
     SC.busy = true;
-    lenis.scrollTo(target, { duration: 1.25, easing: (t) => 1 - Math.pow(1 - t, 4), lock: true, onComplete: () => setTimeout(() => (SC.busy = false), 420) });
+    clearTimeout(SC.busyT);
+    SC.busyT = setTimeout(() => (SC.busy = false), duration * 1000 + 700);
+    lenis.scrollTo(target, { duration, easing: (t) => 1 - Math.pow(1 - t, 4), onComplete: () => { clearTimeout(SC.busyT); SC.busyT = setTimeout(() => (SC.busy = false), 300); } });
   }
   function sceneWheel(data) {
     const e = data.event;
-    if (!e || !e.type.includes('wheel') || e.ctrlKey || currentView !== 'list' || !SC.anchors.length) return true;
+    if (!e || !e.type.includes('wheel') || e.ctrlKey || currentView !== 'list' || SC.steps.length < 2) return true;
     if (e.target && e.target.closest && e.target.closest('#sheet, .menu, #map-host, .rail-track, .study-tabs, .gate')) return true;
     const dy = data.deltaY;
     if (!dy) return true;
     if (SC.busy) { e.preventDefault(); return false; }
-    const dir = dy > 0 ? 1 : -1;
-    const y = lenis.targetScroll;
-    const fr = freeAt(y, dir);
-    if (fr) {
-      const next = y + dy;
-      if (dir > 0 && next > fr[1]) { e.preventDefault(); sceneTo(fr[1]); return false; }
-      if (dir < 0 && next < fr[0]) { e.preventDefault(); sceneTo(fr[0]); return false; }
-      return true;
-    }
+    const y = lenis.targetScroll, dir = dy > 0 ? 1 : -1;
+    const i = SC.steps.findIndex((v) => Math.abs(v - y) < 6);
+    // only the opening scenes step: hero <-> manifesto <-> journeys
+    const stepping = i >= 0 && ((dir > 0 && i < SC.steps.length - 1) || (dir < 0 && i > 0));
+    if (!stepping) return true;
     e.preventDefault();
     SC.acc += dy; clearTimeout(SC.accT); SC.accT = setTimeout(() => (SC.acc = 0), 220);
-    if (Math.abs(SC.acc) < 24) return false;
+    if (Math.abs(SC.acc) < 20) return false;
     SC.acc = 0;
-    const target = dir > 0 ? SC.anchors.find((v) => v > y + 4) : [...SC.anchors].reverse().find((v) => v < y - 4);
-    if (target != null) sceneTo(target);
+    sceneTo(SC.steps[i + dir]);
     return false;
   }
-  // keyboard, scrollbar or a resize can stop between scenes: settle to the nearest scene
+  // when scrolling comes to rest near a scene, glide onto it; far from one, leave it alone
   function settleScene() {
     clearTimeout(SC.settleT);
     SC.settleT = setTimeout(() => {
-      if (!lenis || SC.busy || currentView !== 'list' || !SC.anchors.length || sheet.open) return;
-      const y = lenis.scroll;
-      if (SC.free.some(([a, b]) => y >= a - 2 && y <= b + 2) || SC.anchors.some((v) => Math.abs(v - y) < 3)) return;
-      const near = SC.anchors.reduce((p, v) => (Math.abs(v - y) < Math.abs(p - y) ? v : p), SC.anchors[0]);
-      sceneTo(near);
-    }, 260);
+      if (!lenis || SC.busy || currentView !== 'list' || !SC.magnets.length || sheet.open) return;
+      // only pull forward, in the direction the reader was already going; never drag them back
+      const y = lenis.scroll, reach = innerHeight * 0.22, dir = lenis.direction || 0;
+      if (!dir) return;
+      const ahead = SC.magnets.filter((v) => (dir > 0 ? v > y + 3 : v < y - 3));
+      if (!ahead.length) return;
+      const near = dir > 0 ? Math.min(...ahead) : Math.max(...ahead);
+      if (Math.abs(near - y) < reach) sceneTo(near, 0.8);
+    }, 320);
   }
   function setupSnap() {
     buildAnchors();
