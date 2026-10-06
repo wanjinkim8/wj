@@ -549,3 +549,33 @@ html.nav-hidden .study-tabs { transform: translateY(calc(-1 * (var(--top-h) + en
   background: linear-gradient(100deg, #cfb27c 0%, #f4e4c0 32%, #d8bb86 52%, #f7ead0 74%, #cdae78 100%); background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; }
 .logo-lg i, .logo-xl i { background: linear-gradient(100deg, #d8bb86, #f4e4c0); width: 0.13em; height: 0.13em; }
 .curtain .logo-lg { font-size: clamp(64px, 7vw, 96px); }
+
+/* ---------- journeys hover: the picture rises softly behind, four variants (html[data-peek]) ---------- */
+.jpeek { display: none !important; }
+.journeys { isolation: isolate; }
+.jrow a { overflow: hidden; }
+.jrow-bg { position: absolute; inset: 0; z-index: -2; background: var(--img) center / cover no-repeat; opacity: 0; pointer-events: none; transition: opacity 900ms var(--ease-lux), transform 2400ms var(--ease-lux); }
+.jback { position: absolute; z-index: -3; pointer-events: none; overflow: hidden; display: none; }
+.jback img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transform: scale(1.06); transition: opacity 1000ms var(--ease-out), transform 2600ms var(--ease-lux); }
+.jback img.on { opacity: 1; transform: scale(1); }
+
+/* a: the row takes the picture, fading in from the right */
+html[data-peek="a"] .jrow-bg { background-position: 70% 50%; filter: brightness(0.62) saturate(0.95); -webkit-mask-image: linear-gradient(90deg, transparent 18%, rgba(0, 0, 0, 0.55) 55%, #000 92%); mask-image: linear-gradient(90deg, transparent 18%, rgba(0, 0, 0, 0.55) 55%, #000 92%); }
+html[data-peek="a"] .jrow a:hover .jrow-bg, html[data-peek="a"] .jrow a:focus-visible .jrow-bg { opacity: 0.9; }
+
+/* b: the whole section turns into the picture, very dark and calm */
+html[data-peek="b"] .jback { display: block; top: 0; bottom: 0; left: 50%; width: 100vw; transform: translateX(-50%); -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 22%, #000 78%, transparent 100%); mask-image: linear-gradient(180deg, transparent 0%, #000 22%, #000 78%, transparent 100%); }
+html[data-peek="b"] .jback img { filter: brightness(0.32) saturate(0.85); }
+html[data-peek="b"] .jrow a::before { display: none; }
+
+/* c: a large picture on the right half, fading into the list */
+html[data-peek="c"] .jback { display: block; top: 28%; bottom: 4%; right: calc(-1 * var(--gutter)); width: 58%; -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.6) 35%, #000 70%), linear-gradient(180deg, transparent, #000 18%, #000 82%, transparent); -webkit-mask-composite: source-in; mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.6) 35%, #000 70%), linear-gradient(180deg, transparent, #000 18%, #000 82%, transparent); mask-composite: intersect; }
+html[data-peek="c"] .jback img { filter: brightness(0.6); }
+
+/* d: the row glows with the picture across its full width and settles slowly */
+html[data-peek="d"] .jrow-bg { transform: scale(1.08); filter: brightness(0.45) saturate(0.9); -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 22%, #000 78%, transparent 100%); mask-image: linear-gradient(90deg, transparent 0%, #000 22%, #000 78%, transparent 100%); }
+html[data-peek="d"] .jrow a:hover .jrow-bg, html[data-peek="d"] .jrow a:focus-visible .jrow-bg { opacity: 1; transform: scale(1); }
+html[data-peek="d"] .jrow a::before { display: none; }
+
+@media (hover: none) { .jrow-bg, .jback { display: none !important; } }
+@media (prefers-reduced-motion: reduce) { .jrow-bg, .jback img { transition: opacity 200ms linear; transform: none !important; } }

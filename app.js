@@ -189,6 +189,7 @@
     const counts = {};
     S.wines.forEach((w) => (counts[w.tier] = (counts[w.tier] || 0) + 1));
     $('#jlist').innerHTML = S.tiers.map((t) => `<li class="jrow"><a href="#tier-${t.tier}" data-jump="${t.tier}" data-img="${esc(t.img)}">
+      <span class="jrow-bg" aria-hidden="true" style="--img:url('media/${esc(t.img)}-s.webp')"></span>
       <span class="jno">${two(t.tier)}</span>
       <span class="jmeta"><span class="jrange">${esc(t.range)}</span><i></i><span>${esc(t.concept)}</span></span>
       <span class="jtitle">${esc(t.headline)}</span>
@@ -196,27 +197,24 @@
       <i class="cta-ic jarrow" aria-hidden="true"></i></a></li>`).join('');
     setupPeek();
   }
+  // the tier picture rises softly behind the list; variant chosen with ?peek=a|b|c|d
+  const PEEK = (new URLSearchParams(location.search).get('peek') || 'a').toLowerCase();
+  document.documentElement.dataset.peek = PEEK;
   let peekBound = false;
   function setupPeek() {
-    const peek = $('#jpeek');
-    if (!peek || !fine || reduce || peekBound || !window.gsap) return;
+    const sec = $('#journeys');
+    if (!sec || peekBound) return;
     peekBound = true;
-    const inner = $('.jpeek-in', peek);
-    inner.innerHTML = S.tiers.map((t) => `<img src="media/${esc(t.img)}-s.webp" data-img="${esc(t.img)}" alt="">`).join('');
+    const back = document.createElement('div');
+    back.className = 'jback'; back.setAttribute('aria-hidden', 'true');
+    back.innerHTML = S.tiers.map((t) => `<img src="media/${esc(t.img)}.webp" data-img="${esc(t.img)}" alt="" loading="lazy" decoding="async">`).join('');
+    sec.prepend(back);
     const list = $('#jlist');
-    const xTo = gsap.quickTo(peek, 'x', { duration: 0.9, ease: 'power3' });
-    const yTo = gsap.quickTo(peek, 'y', { duration: 0.9, ease: 'power3' });
-    let first = true, cur = '';
-    list.addEventListener('pointermove', (e) => {
-      const a = e.target.closest('a[data-img]');
-      const x = e.clientX + 48, y = e.clientY - peek.offsetHeight / 2;
-      if (first) { gsap.set(peek, { x, y }); first = false; }
-      xTo(x); yTo(y);
-      if (!a) return;
-      peek.classList.add('on');
-      if (a.dataset.img !== cur) { cur = a.dataset.img; $$('img', inner).forEach((im) => im.classList.toggle('on', im.dataset.img === cur)); }
-    });
-    list.addEventListener('pointerleave', () => { peek.classList.remove('on'); first = true; cur = ''; });
+    const show = (img) => $$('img', back).forEach((im) => im.classList.toggle('on', im.dataset.img === img));
+    list.addEventListener('pointerover', (e) => { const a = e.target.closest('a[data-img]'); if (a) show(a.dataset.img); });
+    list.addEventListener('focusin', (e) => { const a = e.target.closest('a[data-img]'); if (a) show(a.dataset.img); });
+    list.addEventListener('pointerleave', () => show(''));
+    list.addEventListener('focusout', (e) => { if (!list.contains(e.relatedTarget)) show(''); });
   }
 
   /* ---------------- hero ---------------- */
