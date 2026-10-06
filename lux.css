@@ -579,3 +579,29 @@ html[data-peek="d"] .jrow a::before { display: none; }
 
 @media (hover: none) { .jrow-bg, .jback { display: none !important; } }
 @media (prefers-reduced-motion: reduce) { .jrow-bg, .jback img { transition: opacity 200ms linear; transform: none !important; } }
+
+/* ---------- selection criteria: three routes above the journeys list ---------- */
+.criteria { margin: 56px 0 0; display: grid; gap: 0; border-top: 1px solid var(--line-2); }
+.crit { display: grid; grid-template-columns: 44px minmax(0, 1fr); column-gap: 14px; row-gap: 6px; padding: 22px 0; border-bottom: 1px solid var(--line); }
+.crit-no { grid-row: span 2; font-family: var(--serif-en); font-style: italic; font-size: 20px; color: var(--accent); }
+.crit strong { font-weight: 400; font-size: 18px; letter-spacing: -0.02em; color: var(--ink); }
+.crit p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.75; }
+.crit-foot { grid-column: 1 / -1; margin: 18px 0 0; color: var(--muted); font-size: 13.5px; }
+.crit-foot button, .route-more { color: var(--accent-2); font-size: 13.5px; background: linear-gradient(currentColor, currentColor) 0 100% / 100% 1px no-repeat; padding-bottom: 3px; margin-left: 6px; }
+@media (min-width: 900px) {
+  .criteria { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 48px; border-top: 0; }
+  .crit { border-top: 1px solid var(--line-2); border-bottom: 0; padding: 26px 0 8px; }
+  .crit-foot { margin-top: 14px; }
+}
+.jlist { margin-top: 64px; }
+/* detail: why this wine is here */
+.route-box { margin-top: 18px; display: grid; gap: 12px; }
+.route-row p { margin: 6px 0 0; color: var(--ink-2); font-size: 14.5px; line-height: 1.75; }
+.route-row:not(.main) .axis-badge { color: var(--muted); }
+.route-more { justify-self: start; margin: 2px 0 0; }
+/* criteria sheet */
+.crit-sheet h2 { margin-top: 18px; }
+.crit-sec { padding: 22px 0; border-top: 1px solid var(--line); }
+.crit-sec h3 { margin: 0 0 10px; font-size: 17px; font-weight: 500; color: var(--accent-2); letter-spacing: -0.02em; }
+.crit-sec p { margin: 6px 0 0; color: var(--ink-2); line-height: 1.85; }
+.foot-nav button[data-action="criteria"] { font-family: var(--font); }

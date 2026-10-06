@@ -65,6 +65,20 @@
     clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 1900);
   }
 
+  /* ---------------- why a wine is here: the three admission routes ---------------- */
+  const ROUTE = {
+    가성비: { label: '가성비 와인', line: '10만 원 아래에서 평점과 맛이 확실하고, 그 나라다운 맛을 잘 보여 주는 병입니다.' },
+    스토리: { label: '스토리 와인', line: '가격과 상관없이 한 잔을 나누며 들려줄 이야기가 있는 병입니다. 이야기는 출처 두 곳에서 확인했습니다.' },
+    기준: { label: '교과서 와인', line: '그 품종과 산지가 원래 어떤 맛인지 보여 주는 대표 한 병입니다. 전문 자료 두 곳이 대표로 꼽았습니다.' },
+  };
+  // until every wine has a recorded route, read the old 맛 / 스토리 marks
+  function routesOf(w) {
+    if (w.routes && w.routes.length) return w.routes;
+    const p = priceOf(w);
+    return (w.axis || []).map((a) => (a === '스토리' ? '스토리' : p && p < 100000 ? '가성비' : '기준')).filter((v, i, a) => a.indexOf(v) === i);
+  }
+  const routeOf = (w) => w.route || routesOf(w)[0];
+
   /* ---------------- list ---------------- */
   const saveData = () => !!(navigator.connection && navigator.connection.saveData);
   const two = (n) => String(n).padStart(2, '0');
@@ -73,7 +87,7 @@
     const f = S.filter;
     if (f.types.size && !f.types.has(w.type)) return false;
     if (f.countries.size && !f.countries.has(w.country)) return false;
-    if (f.axis.size && !(w.axis || []).some((a) => f.axis.has(a))) return false;
+    if (f.axis.size && !routesOf(w).some((a) => f.axis.has(a))) return false;
     if (f.q) {
       const hay = [w.name, w.en, w.grape, w.country, w.region, w.region_ko, w.hook, w.type].join(' ').toLowerCase();
       if (!f.q.toLowerCase().split(/\s+/).every((t) => hay.includes(t))) return false;
@@ -90,11 +104,12 @@
   }
   function cardHTML(w) {
     const p = priceOf(w);
-    const axis = (w.axis || []).map((a) => `<span>${esc(a)}</span>`).join('');
+    const rt = routeOf(w);
+    const axis = rt && ROUTE[rt] ? `<span>${ROUTE[rt].label}</span>` : '';
     const hook = w.hook || w.note;
     return `<article class="card pre" data-id="${esc(w.id)}">
       <div class="card-stage"><span class="spot" aria-hidden="true"></span>
-        ${axis ? `<div class="card-axis" aria-label="꼭 마셔 볼 이유">${axis}</div>` : ''}
+        ${axis ? `<div class="card-axis" aria-label="W.J 가 고른 이유">${axis}</div>` : ''}
         ${w.img ? `<img class="card-bottle" src="${esc(w.img.replace('bottles/', 'bottles/s/'))}" alt="" loading="lazy" decoding="async">` : '<span class="card-noimg">병 사진 준비 중</span>'}
       </div>
       <div class="card-info">
@@ -149,7 +164,7 @@
     const chips = [];
     f.types.forEach((v) => chips.push(['types', v, v]));
     f.countries.forEach((v) => chips.push(['countries', v, v]));
-    f.axis.forEach((v) => chips.push(['axis', v, `기준 ${v}`]));
+    f.axis.forEach((v) => chips.push(['axis', v, (ROUTE[v] || {}).label || v]));
     if (f.q) chips.push(['q', f.q, `「${f.q}」`]);
     box.hidden = !chips.length;
     box.innerHTML = chips.map(([k, v, l]) => `<button class="chip" type="button" data-unset="${k}" data-v="${esc(v)}" aria-label="${esc(l)} 조건 지우기">${esc(l)}</button>`).join('');
@@ -540,7 +555,7 @@
           <div class="wd-kind"><i class="dot" data-type="${esc(w.type)}"></i>${esc(w.type)}<span>·</span>${esc(w.grape)}<span>·</span>${esc(w.country)}${w.region_ko || w.region ? ` ${esc(w.region_ko || w.region)}` : ''}</div>
           <h2 class="wd-name" id="sheet-title">${esc(w.name)}</h2>
           ${w.en ? `<p class="wd-en" lang="en">${esc(w.en)}</p>` : ''}
-          ${w.axis ? `<div class="axis-badges">${w.axis.map((a) => `<span class="axis-badge">꼭 마셔 볼 이유 · ${esc(a)}</span>`).join('')}</div>` : ''}
+          ${routesOf(w).length ? `<div class="route-box">${routesOf(w).map((r, i) => `<div class="route-row${i ? '' : ' main'}"><span class="axis-badge">W.J 가 고른 이유 · ${esc((ROUTE[r] || {}).label || r)}</span><p>${esc(i === 0 && w.route_note ? w.route_note : (ROUTE[r] || {}).line || '')}</p></div>`).join('')}<button class="route-more" type="button" data-action="criteria">선정 기준 자세히 보기</button></div>` : ''}
           ${w.hook ? `<p class="wd-hook">${esc(w.hook)}</p>` : w.note ? `<p class="wd-hook">${esc(w.note)}</p>` : ''}
         </header>
         <dl class="facts">
@@ -745,7 +760,7 @@
       ${group('스타일', 'types', TYPES.map((t) => [t, t, 1]))}
       <p class="f-note">샴페인은 프랑스 샹파뉴 지방에서 병 속 2차 발효로 만든 스파클링만 쓸 수 있는 이름입니다. 스페인 카바 · 이탈리아 프로세코는 스파클링으로 나눴습니다.</p>
       ${group('나라', 'countries', ORDER.map((c) => [c, c]))}
-      ${group('꼭 마셔 볼 기준', 'axis', [['맛', '맛이 뛰어난 병'], ['스토리', '이야기가 있는 병']])}
+      ${group('W.J 가 고른 이유', 'axis', [['가성비', '가성비 와인'], ['스토리', '스토리 와인'], ['기준', '교과서 와인']])}
       <div class="q-block"><h3>정렬</h3><div class="choice-row">${[['rec', '나라순'], ['price', '낮은 가격순'], ['rate', '평점 높은 순']].map(([v, l]) => `<button class="choice" type="button" data-sort="${v}" aria-pressed="${tmp.sort === v}">${l}</button>`).join('')}</div></div>
       <div class="sheet-actions"><button class="btn btn-ghost" type="button" data-f="reset">모두 지우기</button><button class="btn btn-primary" type="button" data-f="apply">결과 보기 <span class="num" id="f-n"></span></button></div></div>`, { label: '와인 찾기' });
     const box = $('#sheet-body');
@@ -770,6 +785,20 @@
       renderList(); setupRailSpy();
       $('#tier-rail').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' });
     });
+  }
+
+  /* ---------------- selection criteria sheet ---------------- */
+  function criteriaSheet() {
+    const sec = (t, ps) => `<div class="crit-sec"><h3>${t}</h3>${ps.map((p) => `<p>${p}</p>`).join('')}</div>`;
+    openSheet(`<div class="ps crit-sheet">
+      <p class="eyebrow" lang="en">Our Criteria</p>
+      <h2>W.J 가 와인을 고르는 기준</h2>
+      <p class="lead">세 기준 중 하나를 통과한 와인만 올립니다. 카드에는 대표 기준 하나, 상세에는 통과한 기준을 모두 적었습니다.</p>
+      ${sec('가성비 와인', ['국내 정상가가 10만 원 미만이고 맛 평가가 확실한 병입니다.', 'Vivino 평점 3.8 이상, 평가 1,000개 이상이 기본입니다. 가격 칸이 오를수록 기준이 올라가 3만 원 미만 3.8, 3만~5만 원 3.9, 5만~7만 원 4.0, 7만~10만 원 4.1 입니다. 화이트와 스파클링은 0.1 낮춰 봅니다.', '그 나라의 대표 품종과 산지로 만든 와인이어야 하고, 같은 나라 · 같은 종류 · 같은 가격 칸의 와인과 견주어 앞서야 합니다.'])}
+      ${sec('스토리 와인', ['가격과 상관없이 한 잔을 나누며 들려줄 이야기가 있는 병입니다.', '와인 역사를 바꾼 사건, 산지를 바꾼 생산자의 결정, 그 밭만의 사연, 처음 쓴 기술이나 기록, 영화 · 문학 · 왕실 같은 문화와 얽힌 이야기가 여기에 해당합니다.', '이야기는 서로 다른 출처 두 곳에서 확인하고, 그중 한 곳은 생산자나 판매처가 아닌 곳이어야 합니다. 수상 목록이나 유명인 소유 같은 이야기는 넣지 않습니다.'])}
+      ${sec('교과서 와인', ['그 품종과 산지가 원래 어떤 맛인지 보여 주는 대표 한 병입니다. 처음 마시는 분에게는 출발점이 되고, 오래 마신 분에게는 다른 와인과 견주어 볼 잣대가 됩니다.', 'Wine Folly · GuildSomm · Jancis Robinson · Wine21 중 두 곳 이상이 대표로 꼽은 와인이고, 품종과 산지 한 칸에 한 병만 둡니다.'])}
+      ${sec('모든 와인에 공통', ['지금 한국에서 살 수 있는 와인만 올립니다. 판매처 이름과 가격, 확인 날짜를 함께 적습니다.', '병 사진은 실제 라벨과 대조한 것만 씁니다.', '한 생산자의 와인은 목록 전체에서 네 병, 같은 가격대에서는 한 병까지 둡니다. 같은 가격대라도 스타일이 다르면 두 병까지 둡니다.', '가격과 평점은 석 달마다 다시 확인하고, 기준을 잃은 와인은 다시 심사해 뺍니다.'])}
+    </div>`, { label: '선정 기준' });
   }
 
   /* ---------------- share ---------------- */
@@ -874,6 +903,7 @@
     else if (a === 'search') { toggleMenu(false); filterSheet(true); }
     else if (a === 'clear-filters') { S.filter = { tier: 0, types: new Set(), countries: new Set(), axis: new Set(), q: '', sort: 'rec' }; renderList(); setupRailSpy(); }
     else if (a === 'share') share(t.dataset.id);
+    else if (a === 'criteria') criteriaSheet();
   });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('#menu').hidden) toggleMenu(false); });
   $$('[data-scroll="journeys"]').forEach((el) => el.addEventListener('click', (e) => { if (location.hash === '#/list') { e.preventDefault(); route(); } }));
