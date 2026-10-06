@@ -100,7 +100,7 @@
     const l = [...list];
     if (s === 'price') l.sort((a, b) => (priceOf(a) ?? 1e9) - (priceOf(b) ?? 1e9));
     else if (s === 'rate') l.sort((a, b) => ((b.vivino && b.vivino.r) || 0) - ((a.vivino && a.vivino.r) || 0));
-    else l.sort((a, b) => ORDER.indexOf(a.country) - ORDER.indexOf(b.country));
+    else { const oi = (c) => (ORDER.indexOf(c) < 0 ? 99 : ORDER.indexOf(c)); l.sort((a, b) => oi(a.country) - oi(b.country)); }
     return l;
   }
   function cardHTML(w) {
@@ -560,7 +560,7 @@
           ${w.hook ? `<p class="wd-hook">${esc(w.hook)}</p>` : w.note ? `<p class="wd-hook">${esc(w.note)}</p>` : ''}
         </header>
         <dl class="facts">
-          <div class="fact"><dt>국내 판매가</dt><dd>${p.v ? `${p.v.toLocaleString('ko-KR')}원` : '확인 중'}</dd><small>${esc([p.src, p.checked].filter(Boolean).join(' · '))}</small></div>
+          <div class="fact"><dt>국내 판매가</dt><dd>${p.v ? `${p.v.toLocaleString('ko-KR')}원` : '확인 중'}</dd><small>${esc([(p.src || '').split(/[\s(,·]/)[0], p.checked].filter(Boolean).join(' · '))}</small></div>
           <div class="fact"><dt>Vivino 평점</dt><dd>${viv ? `${viv.r.toFixed(1)} / 5` : '확인 중'}</dd><small>${viv && viv.c ? `평가 ${viv.c.toLocaleString('ko-KR')}개 · ` : ''}${viv && viv.url ? `<a href="${esc(viv.url)}" target="_blank" rel="noopener">Vivino 에서 보기</a>` : ''}</small></div>
           <div class="fact"><dt>가격대</dt><dd>${esc(t.range || '')}</dd><small>${esc(t.concept || '')}</small></div>
           <div class="fact"><dt>스타일</dt><dd>${esc(w.type)}</dd><small>${esc(w.grape)}</small></div>
@@ -760,7 +760,7 @@
       <label class="search-box"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg><input id="q" type="search" enterkeyhint="search" placeholder="이름, 품종, 산지로 찾기" value="${esc(tmp.q)}" autocomplete="off"></label>
       ${group('스타일', 'types', TYPES.map((t) => [t, t, 1]))}
       <p class="f-note">샴페인은 프랑스 샹파뉴 지방에서 병 속 2차 발효로 만든 스파클링만 쓸 수 있는 이름입니다. 스페인 카바 · 이탈리아 프로세코는 스파클링으로 나눴습니다.</p>
-      ${group('나라', 'countries', ORDER.map((c) => [c, c]))}
+      ${group('나라', 'countries', [...ORDER, ...[...new Set(S.wines.map((w) => w.country))].filter((c) => !ORDER.includes(c))].filter((c) => S.wines.some((w) => w.country === c)).map((c) => [c, c]))}
       ${group('W.J 가 고른 이유', 'axis', [['가성비', '가성비 와인'], ['스토리', '스토리 와인'], ['기준', '교과서 와인']])}
       <div class="q-block"><h3>정렬</h3><div class="choice-row">${[['rec', '나라순'], ['price', '낮은 가격순'], ['rate', '평점 높은 순']].map(([v, l]) => `<button class="choice" type="button" data-sort="${v}" aria-pressed="${tmp.sort === v}">${l}</button>`).join('')}</div></div>
       <div class="sheet-actions"><button class="btn btn-ghost" type="button" data-f="reset">모두 지우기</button><button class="btn btn-primary" type="button" data-f="apply">결과 보기 <span class="num" id="f-n"></span></button></div></div>`, { label: '와인 찾기' });
