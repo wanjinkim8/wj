@@ -544,3 +544,9 @@ html.nav-hidden .study-tabs { transform: translateY(calc(-1 * (var(--top-h) + en
 #tier-1 .chapter-media > img, #tier-1 .chapter-media > video { object-position: 66% 50%; }
 /* study body starts on the same left edge as the logo */
 .study-body { max-width: none !important; margin: 0 !important; padding-left: var(--edge) !important; padding-right: var(--edge) !important; }
+
+/* logotype at large sizes: room for the j descender and the dot, sturdier hairlines, a lighter foil */
+.logo-lg, .logo-xl { display: inline-block; line-height: 1.15; padding: 0.1em 0.16em 0.3em 0.1em; font-optical-sizing: none; font-variation-settings: "opsz" 14; font-weight: 500;
+  background: linear-gradient(100deg, #cfb27c 0%, #f4e4c0 32%, #d8bb86 52%, #f7ead0 74%, #cdae78 100%); background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; }
+.logo-lg i, .logo-xl i { background: linear-gradient(100deg, #d8bb86, #f4e4c0); width: 0.13em; height: 0.13em; }
+.curtain .logo-lg { font-size: clamp(64px, 7vw, 96px); }
